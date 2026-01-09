@@ -1,52 +1,126 @@
+"use client"
+
 import { Stethoscope, Scissors, Syringe, Heart } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { useState } from "react"
 
 const services = [
   {
     icon: Stethoscope,
     title: "Consultas Generales",
     description: "Exámenes completos y diagnósticos profesionales para tu mascota",
+    color: "from-blue-500/10 to-cyan-500/10",
+    iconColor: "text-blue-600",
+    borderColor: "group-hover:border-blue-500/50"
   },
   {
     icon: Scissors,
-    title: "Cirugías",
-    description: "Procedimientos quirúrgicos con equipamiento de última generación",
+    title: "Telemedicina",
+    description: "Procedimientos para detectar online y con rapidez el diagnóstico",
+    color: "from-purple-500/10 to-pink-500/10",
+    iconColor: "text-purple-600",
+    borderColor: "group-hover:border-purple-500/50"
   },
   {
     icon: Syringe,
     title: "Vacunación",
     description: "Plan de vacunación completo para proteger a tu mascota",
+    color: "from-green-500/10 to-emerald-500/10",
+    iconColor: "text-green-600",
+    borderColor: "group-hover:border-green-500/50"
   },
   {
     icon: Heart,
     title: "Urgencias",
     description: "Atención de emergencia las 24 horas del día",
+    color: "from-red-500/10 to-rose-500/10",
+    iconColor: "text-red-600",
+    borderColor: "group-hover:border-red-500/50"
   },
 ]
 
 export function ServicesSection() {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
   return (
-    <section className="py-12 md:py-16 lg:py-20">
-      <div className="container px-4">
-        <div className="mb-8 text-center md:mb-12">
-          <h2 className="mb-3 text-balance text-3xl font-bold md:mb-4 md:text-4xl">Nuestros Servicios</h2>
-          <p className="mx-auto max-w-2xl text-pretty text-base text-muted-foreground md:text-lg">
+    <section className="relative py-16 md:py-20 lg:py-28 overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-primary/[0.02] to-background" />
+      <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      
+      <div className="container px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Header with stagger animation */}
+        <div className="mb-12 text-center md:mb-16 lg:mb-20 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="inline-block">
+            <span className="inline-block px-4 py-1.5 mb-4 text-sm font-semibold rounded-full bg-primary/10 text-primary border border-primary/20">
+              Lo que ofrecemos
+            </span>
+          </div>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Nuestros Servicios
+          </h2>
+          <p className="mx-auto max-w-2xl text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed">
             Ofrecemos atención integral para el bienestar de tu mascota con profesionales altamente capacitados
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
+        {/* Services Grid with improved responsive */}
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 md:gap-8">
           {services.map((service, index) => (
-            <Card key={index} className="transition-all hover:shadow-lg">
-              <CardContent className="flex flex-col items-center gap-3 p-5 text-center md:gap-4 md:p-6">
-                <div className="rounded-full bg-primary/10 p-3 md:p-4">
-                  <service.icon className="h-7 w-7 text-primary md:h-8 md:w-8" />
+            <div
+              key={index}
+              className="animate-in fade-in slide-in-from-bottom-8 duration-700"
+              style={{ animationDelay: `${index * 150}ms` }}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <Card 
+                className={`group relative h-full border-2 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 ${service.borderColor} backdrop-blur-sm bg-background/50`}
+              >
+                {/* Animated gradient background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg`} />
+                
+                <CardContent className="relative flex flex-col items-center gap-4 p-6 text-center sm:p-7 md:p-8 lg:gap-5">
+                  {/* Icon container with pulse animation */}
+                  <div className={`relative rounded-2xl bg-gradient-to-br ${service.color} p-4 shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 md:p-5`}>
+                    <div className={`absolute inset-0 rounded-2xl ${service.color} blur-xl opacity-0 group-hover:opacity-70 transition-opacity duration-500`} />
+                    <service.icon 
+                      className={`relative h-8 w-8 md:h-10 md:w-10 ${service.iconColor} transition-transform duration-500 ${hoveredIndex === index ? 'scale-110' : ''}`}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  
+                  {/* Title with slide animation */}
+                  <h3 className="text-lg font-bold sm:text-xl md:text-2xl transition-colors duration-300 group-hover:text-primary">
+                    {service.title}
+                  </h3>
+                  
+                  {/* Description with fade animation */}
+                  <p className="text-sm leading-relaxed text-muted-foreground sm:text-base md:text-base transition-all duration-300 group-hover:text-foreground/80">
+                    {service.description}
+                  </p>
+
+                  {/* Decorative dot indicator */}
+                  <div className="mt-2 flex gap-1.5">
+                    <div className={`h-1.5 w-1.5 rounded-full bg-primary/40 transition-all duration-300 ${hoveredIndex === index ? 'w-8 bg-primary' : ''}`} />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/40" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/40" />
+                  </div>
+                </CardContent>
+
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none overflow-hidden">
+                  <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
                 </div>
-                <h3 className="text-lg font-semibold md:text-xl">{service.title}</h3>
-                <p className="text-pretty text-sm text-muted-foreground md:text-base">{service.description}</p>
-              </CardContent>
-            </Card>
+              </Card>
+            </div>
           ))}
+        </div>
+
+        {/* Bottom decorative line */}
+        <div className="mt-16 flex justify-center animate-in fade-in duration-1000" style={{ animationDelay: '800ms' }}>
+          <div className="h-1 w-24 rounded-full bg-gradient-to-r from-primary/0 via-primary to-primary/0" />
         </div>
       </div>
     </section>
