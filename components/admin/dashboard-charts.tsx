@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, Pie, PieChart, Cell, XAxis, YAxis } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, Cell, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts"
 import { getTurnos } from "@/lib/firebase/firestore"
 import type { Turno } from "@/lib/firebase/firestore"
-import { Calendar, PawPrint, CheckCircle2 } from "lucide-react"
+import { Calendar, TrendingUp, CheckCircle2, Clock } from "lucide-react"
 
 export function DashboardCharts() {
   const [turnos, setTurnos] = useState<Turno[]>([])
@@ -30,7 +29,7 @@ export function DashboardCharts() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-900 dark:border-slate-100 border-t-transparent" />
       </div>
     )
   }
@@ -47,11 +46,10 @@ export function DashboardCharts() {
 
   const turnosPorDiaData = Object.entries(turnosPorDia)
     .map(([fecha, cantidad]) => ({
-      fecha,
+      fecha: new Date(fecha + 'T00:00:00').toLocaleDateString('es-AR', { month: 'short', day: 'numeric' }),
       cantidad,
     }))
-    .slice(0, 7)
-    .reverse()
+    .slice(-7)
 
   const mascotasPorTipo = turnos.reduce(
     (acc, turno) => {
@@ -74,128 +72,182 @@ export function DashboardCharts() {
   }
 
   const estadosTurnosData = [
-    { estado: "Pendientes", cantidad: estadosTurnos.pendiente },
-    { estado: "Completados", cantidad: estadosTurnos.completado },
-    { estado: "Cancelados", cantidad: estadosTurnos.cancelado },
+    { estado: "Pendientes", cantidad: estadosTurnos.pendiente, color: "#64748b" },
+    { estado: "Completados", cantidad: estadosTurnos.completado, color: "#059669" },
+    { estado: "Cancelados", cantidad: estadosTurnos.cancelado, color: "#dc2626" },
   ]
 
-  const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))"]
+  const PIE_COLORS = ["#1e40af", "#7c3aed", "#db2777", "#ea580c", "#0891b2"]
+
+  const totalTurnos = turnos.length
+  const tasaCompletado = totalTurnos > 0 ? ((estadosTurnos.completado / totalTurnos) * 100).toFixed(0) : 0
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Turnos</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card className="border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Total Turnos</CardTitle>
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{turnos.length}</div>
-            <p className="text-xs text-muted-foreground">Turnos registrados</p>
+          <CardContent className="pt-0">
+            <div className="text-xl sm:text-2xl font-semibold">{turnos.length}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">registrados</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Turnos Pendientes</CardTitle>
-            <PawPrint className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Pendientes</CardTitle>
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{estadosTurnos.pendiente}</div>
-            <p className="text-xs text-muted-foreground">Por atender</p>
+          <CardContent className="pt-0">
+            <div className="text-xl sm:text-2xl font-semibold">{estadosTurnos.pendiente}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">por atender</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Turnos Completados</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Completados</CardTitle>
+            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{estadosTurnos.completado}</div>
-            <p className="text-xs text-muted-foreground">Atendidos</p>
+          <CardContent className="pt-0">
+            <div className="text-xl sm:text-2xl font-semibold">{estadosTurnos.completado}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">atendidos</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Tasa Éxito</CardTitle>
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-xl sm:text-2xl font-semibold">{tasaCompletado}%</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">completados</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base md:text-lg">Turnos por Día</CardTitle>
-            <CardDescription className="text-xs md:text-sm">Últimos 7 días con turnos</CardDescription>
+      {/* Charts Grid */}
+      <div className="grid gap-4 lg:gap-6 lg:grid-cols-2">
+        {/* Turnos por día */}
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold">Turnos por Día</CardTitle>
+            <CardDescription className="text-xs">Últimos 7 días con actividad</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                cantidad: {
-                  label: "Turnos",
-                  color: "hsl(var(--chart-1))",
-                },
-              }}
-              className="h-[250px] md:h-[300px]"
-            >
-              <LineChart data={turnosPorDiaData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Line type="monotone" dataKey="cantidad" stroke="hsl(var(--chart-1))" strokeWidth={2} />
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={turnosPorDiaData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <XAxis 
+                  dataKey="fecha" 
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "#fff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "6px",
+                    fontSize: "12px"
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="cantidad" 
+                  stroke="#1e40af" 
+                  strokeWidth={2}
+                  dot={{ fill: "#1e40af", r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
               </LineChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base md:text-lg">Tipos de Mascotas</CardTitle>
-            <CardDescription className="text-xs md:text-sm">Distribución de mascotas atendidas</CardDescription>
+        {/* Tipos de mascotas */}
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold">Tipos de Mascotas</CardTitle>
+            <CardDescription className="text-xs">Distribución por especie</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                cantidad: {
-                  label: "Cantidad",
-                  color: "hsl(var(--chart-2))",
-                },
-              }}
-              className="h-[250px] md:h-[300px]"
-            >
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={mascotasPorTipoData} dataKey="cantidad" nameKey="tipo" cx="50%" cy="50%" outerRadius={80}>
+                <Pie 
+                  data={mascotasPorTipoData} 
+                  dataKey="cantidad" 
+                  nameKey="tipo" 
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius={90}
+                  label={({ tipo, percent }) => `${tipo} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={{ stroke: "#94a3b8", strokeWidth: 1 }}
+                  style={{ fontSize: "11px" }}
+                >
                   {mascotasPorTipoData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "#fff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "6px",
+                    fontSize: "12px"
+                  }}
+                />
               </PieChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base md:text-lg">Estado de Turnos</CardTitle>
-            <CardDescription className="text-xs md:text-sm">Pendientes vs Completados vs Cancelados</CardDescription>
+        {/* Estado de turnos */}
+        <Card className="lg:col-span-2 border shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold">Estado de Turnos</CardTitle>
+            <CardDescription className="text-xs">Resumen por estado</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                cantidad: {
-                  label: "Cantidad",
-                  color: "hsl(var(--chart-3))",
-                },
-              }}
-              className="h-[250px] md:h-[300px]"
-            >
-              <BarChart data={estadosTurnosData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="estado" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Bar dataKey="cantidad" fill="hsl(var(--chart-3))" />
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={estadosTurnosData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <XAxis 
+                  dataKey="estado" 
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  axisLine={{ stroke: "#e5e7eb" }}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "#fff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "6px",
+                    fontSize: "12px"
+                  }}
+                />
+                <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
+                  {estadosTurnosData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

@@ -1,70 +1,59 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getClientes, getMascotas, getHistorias } from "@/lib/firebase/firestore"
 import type { Cliente, Mascota, Historia } from "@/lib/firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Search, PawPrint, FileText } from "lucide-react"
+import { Search, PawPrint, FileText, User } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 
 export function ClientesManagement() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [allClientes, setAllClientes] = useState<Cliente[]>([])
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
   const [mascotas, setMascotas] = useState<Mascota[]>([])
   const [historiasPorMascota, setHistoriasPorMascota] = useState<Record<string, Historia[]>>({})
-  const [loading, setLoading] = useState(false)
-  const [searching, setSearching] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadingMascotas, setLoadingMascotas] = useState(false)
   const { toast } = useToast()
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      toast({
-        title: "Ingresa un término de búsqueda",
-        description: "Escribe el nombre o email del cliente",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setSearching(true)
-    try {
-      const allClientes = await getClientes()
-      const filtered = allClientes.filter(
-        (c) =>
-          c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.email.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-
-      setClientes(filtered)
-
-      if (filtered.length === 0) {
+  // Cargar todos los clientes al montar el componente
+  useEffect(() => {
+    const fetchClientes = async () => {
+      try {
+        const data = await getClientes()
+        setAllClientes(data)
+      } catch (error) {
+        console.error("Error fetching clientes:", error)
         toast({
-          title: "No se encontraron clientes",
-          description: "Intenta con otro término de búsqueda",
+          title: "Error",
+          description: "No se pudieron cargar los clientes",
+          variant: "destructive",
         })
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error("Error searching clientes:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo realizar la búsqueda",
-        variant: "destructive",
-      })
-    } finally {
-      setSearching(false)
     }
-  }
+
+    fetchClientes()
+  }, [])
+
+  // Filtrar clientes en tiempo real
+  const filteredClientes = allClientes.filter(
+    (c) =>
+      c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.telefono.includes(searchTerm)
+  )
 
   const handleSelectCliente = async (cliente: Cliente) => {
     setSelectedCliente(cliente)
-    setLoading(true)
+    setLoadingMascotas(true)
 
     try {
       if (cliente.id) {
@@ -88,61 +77,89 @@ export function ClientesManagement() {
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setLoadingMascotas(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-900 dark:border-slate-100 border-t-transparent" />
+      </div>
+    )
   }
 
   return (
     <>
-      <Card>
+      <Card className="border shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base md:text-lg">Búsqueda de Clientes</CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            Busca clientes por nombre o email para ver sus mascotas e historias
+          <CardTitle className="text-base font-semibold">Clientes</CardTitle>
+          <CardDescription className="text-xs">
+            Busca y selecciona un cliente para ver sus mascotas e historias clínicas
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="flex-1">
-              <Label htmlFor="search" className="sr-only">
-                Buscar cliente
-              </Label>
+          {/* Buscador */}
+          <div className="mb-4">
+            <Label htmlFor="search" className="sr-only">
+              Buscar cliente
+            </Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="search"
-                placeholder="Buscar por nombre o email..."
+                placeholder="Buscar por nombre, email o teléfono..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="text-sm md:text-base"
+                className="pl-10 text-sm"
               />
             </div>
-            <Button onClick={handleSearch} disabled={searching} className="text-sm md:text-base">
-              <Search className="mr-2 h-4 w-4" />
-              {searching ? "Buscando..." : "Buscar"}
-            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {filteredClientes.length} cliente{filteredClientes.length !== 1 ? 's' : ''} encontrado{filteredClientes.length !== 1 ? 's' : ''}
+            </p>
           </div>
 
-          {clientes.length > 0 && (
-            <div className="mt-4 space-y-2 md:mt-6">
-              <h3 className="text-sm font-semibold md:text-base">Resultados ({clientes.length})</h3>
-              <div className="space-y-2">
-                {clientes.map((cliente) => (
-                  <Card
+          {/* Lista de clientes */}
+          {filteredClientes.length === 0 ? (
+            <div className="text-center py-8">
+              <User className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {searchTerm ? "No se encontraron clientes" : "No hay clientes registrados"}
+              </p>
+            </div>
+          ) : (
+            <div className="border rounded-lg overflow-hidden">
+              {/* Header */}
+              <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 bg-muted/50 p-3 border-b">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">Nombre</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">Email</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">Teléfono</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold w-20"></p>
+              </div>
+              
+              {/* Lista */}
+              <div className="max-h-[400px] overflow-y-auto">
+                {filteredClientes.map((cliente) => (
+                  <div
                     key={cliente.id}
-                    className="cursor-pointer transition-colors hover:bg-muted/50"
+                    className={`grid grid-cols-[1fr_1fr_1fr_auto] gap-3 p-3 border-b last:border-b-0 cursor-pointer transition-colors ${
+                      selectedCliente?.id === cliente.id
+                        ? "bg-blue-50 dark:bg-blue-950/20"
+                        : "hover:bg-muted/30"
+                    }`}
                     onClick={() => handleSelectCliente(cliente)}
                   >
-                    <CardContent className="flex items-center justify-between p-3 md:p-4">
-                      <div>
-                        <p className="text-sm font-semibold md:text-base">{cliente.nombre}</p>
-                        <p className="text-xs text-muted-foreground md:text-sm">{cliente.email}</p>
-                        <p className="text-xs text-muted-foreground md:text-sm">{cliente.telefono}</p>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        Ver Mascotas
-                      </Badge>
-                    </CardContent>
-                  </Card>
+                    <p className="text-sm font-semibold truncate">{cliente.nombre}</p>
+                    <p className="text-sm truncate">{cliente.email}</p>
+                    <p className="text-sm">{cliente.telefono}</p>
+                    <div className="w-20 flex justify-end">
+                      {selectedCliente?.id === cliente.id && (
+                        <Badge variant="outline" className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+                          Activo
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -150,64 +167,90 @@ export function ClientesManagement() {
         </CardContent>
       </Card>
 
+      {/* Detalles del cliente seleccionado */}
       {selectedCliente && (
-        <Card>
+        <Card className="border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base md:text-lg">Cliente: {selectedCliente.nombre}</CardTitle>
-            <CardDescription className="text-xs md:text-sm">Mascotas e historias clínicas</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold">
+                  {selectedCliente.nombre}
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Mascotas e historias clínicas
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {mascotas.length} mascota{mascotas.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {loadingMascotas ? (
               <div className="flex items-center justify-center py-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-900 dark:border-slate-100 border-t-transparent" />
               </div>
             ) : mascotas.length === 0 ? (
-              <p className="text-center text-xs text-muted-foreground md:text-sm">
-                Este cliente no tiene mascotas registradas
-              </p>
+              <div className="text-center py-8">
+                <PawPrint className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Este cliente no tiene mascotas registradas
+                </p>
+              </div>
             ) : (
               <Accordion type="single" collapsible className="w-full">
                 {mascotas.map((mascota) => (
-                  <AccordionItem key={mascota.id} value={mascota.id || ""}>
-                    <AccordionTrigger>
-                      <div className="flex items-center gap-2">
-                        <PawPrint className="h-3.5 w-3.5 text-primary md:h-4 md:w-4" />
-                        <span className="text-sm font-semibold md:text-base">{mascota.nombre}</span>
-                        <Badge variant="outline" className="capitalize text-xs">
-                          {mascota.tipo}
-                        </Badge>
+                  <AccordionItem key={mascota.id} value={mascota.id || ""} className="border rounded-lg mb-2 px-4">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                          <PawPrint className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className="text-sm font-semibold">{mascota.nombre}</p>
+                          <div className="flex gap-2 mt-0.5">
+                            <Badge variant="outline" className="text-[10px] capitalize">
+                              {mascota.tipo}
+                            </Badge>
+                            {historiasPorMascota[mascota.id || ""]?.length > 0 && (
+                              <Badge variant="outline" className="text-[10px]">
+                                {historiasPorMascota[mascota.id || ""].length} registro{historiasPorMascota[mascota.id || ""].length !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="space-y-3 pl-4 md:space-y-4 md:pl-6">
+                      <div className="space-y-3 pt-2 pb-3">
                         <div>
-                          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold md:text-base">
-                            <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                          <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
                             Historia Clínica
                           </h4>
                           {mascota.id && historiasPorMascota[mascota.id]?.length > 0 ? (
-                            <div className="space-y-2 md:space-y-3">
+                            <div className="space-y-2">
                               {historiasPorMascota[mascota.id].map((historia) => (
-                                <Card key={historia.id}>
-                                  <CardContent className="p-3 md:p-4">
+                                <Card key={historia.id} className="border-l-4 border-l-blue-500">
+                                  <CardContent className="p-3">
                                     <div className="space-y-2">
                                       <div className="flex items-center justify-between">
-                                        <p className="text-xs font-semibold md:text-sm">
-                                          Fecha: {historia.fechaAtencion}
-                                        </p>
+                                        <Badge variant="outline" className="text-[10px]">
+                                          {historia.fechaAtencion}
+                                        </Badge>
                                       </div>
                                       <div>
-                                        <p className="text-xs font-semibold text-muted-foreground">Diagnóstico:</p>
-                                        <p className="text-xs md:text-sm">{historia.diagnostico}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground mb-1">Diagnóstico:</p>
+                                        <p className="text-sm">{historia.diagnostico}</p>
                                       </div>
                                       <div>
-                                        <p className="text-xs font-semibold text-muted-foreground">Tratamiento:</p>
-                                        <p className="text-xs md:text-sm">{historia.tratamiento}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground mb-1">Tratamiento:</p>
+                                        <p className="text-sm">{historia.tratamiento}</p>
                                       </div>
                                       {historia.observaciones && (
                                         <div>
-                                          <p className="text-xs font-semibold text-muted-foreground">Observaciones:</p>
-                                          <p className="text-xs md:text-sm">{historia.observaciones}</p>
+                                          <p className="text-xs font-semibold text-muted-foreground mb-1">Observaciones:</p>
+                                          <p className="text-sm text-muted-foreground">{historia.observaciones}</p>
                                         </div>
                                       )}
                                     </div>
@@ -216,9 +259,12 @@ export function ClientesManagement() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-muted-foreground md:text-sm">
-                              No hay historias clínicas registradas
-                            </p>
+                            <div className="text-center py-6 border border-dashed rounded-lg">
+                              <FileText className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
+                              <p className="text-xs text-muted-foreground">
+                                No hay historias clínicas registradas
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
