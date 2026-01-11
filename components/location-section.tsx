@@ -1,6 +1,6 @@
 "use client"
 
-import { MapPin, Clock, Phone, Mail, Calendar, Heart } from "lucide-react"
+import { MapPin, Clock, Phone, Mail } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -20,14 +20,14 @@ export function LocationSection() {
       title: "Teléfono",
       detail: "+54 9 379 466-2600",
       subDetail: "WhatsApp disponible",
-      link: "tel:+54 9 379 466-2600"
+      link: "tel:+5493794662600"
     },
     {
       icon: Mail,
       title: "Email",
       detail: "veterinariapriscilas@gmail.com",
       subDetail: "Respuesta en 24hs",
-      link: "veterinariapriscilas@gmail.com"
+      link: "mailto:veterinariapriscilas@gmail.com"
     },
   ]
 
@@ -56,69 +56,69 @@ export function LocationSection() {
         </div>
 
         {/* Main Grid */}
-        <div className="grid gap-8 lg:grid-cols-5 lg:gap-10">
-          {/* Contact Info - Compact Cards */}
+        <div className="grid gap-6 lg:grid-cols-5 lg:gap-10">
+          {/* Contact Info - 2 columnas en móvil */}
           <div className="lg:col-span-2 space-y-4 animate-in fade-in slide-in-from-left-8 duration-700" style={{ animationDelay: '200ms' }}>
-            {contactInfo.map((info, index) => (
-              <Card
-                key={index}
-                className="group border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 backdrop-blur-sm bg-background/95"
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    {/* Icon */}
-                    <div className="rounded-xl bg-primary/10 p-2.5 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-110">
-                      <info.icon 
-                        className="h-5 w-5 text-primary transition-transform duration-300"
-                        strokeWidth={2.5}
-                      />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-4">
+              {contactInfo.map((info, index) => (
+                <Card
+                  key={index}
+                  className="group border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 backdrop-blur-sm bg-background/95"
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  <CardContent className="p-2.5 sm:p-4">
+                    <div className="flex flex-col items-center text-center gap-2 sm:flex-row sm:text-left sm:gap-3">
+                      {/* Icon */}
+                      <div className="rounded-xl bg-primary/10 p-2 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-110 sm:p-2.5">
+                        <info.icon 
+                          className="h-4 w-4 text-primary transition-transform duration-300 sm:h-5 sm:w-5"
+                          strokeWidth={2.5}
+                        />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[10px] font-bold text-foreground mb-0.5 sm:text-sm">
+                          {info.title}
+                        </h3>
+                        <p className="text-[10px] text-foreground/90 font-medium truncate sm:text-sm">
+                          {info.link ? (
+                            <a 
+                              href={info.link}
+                              className="hover:text-primary transition-colors hover:underline"
+                            >
+                              {info.detail}
+                            </a>
+                          ) : (
+                            info.detail
+                          )}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground hidden sm:block sm:text-xs">
+                          {info.subDetail}
+                        </p>
+                      </div>
+
+                      {/* Indicator - oculto en móvil */}
+                      <div className={`hidden sm:block h-2 w-2 rounded-full bg-primary/40 transition-all duration-300 ${hoveredIndex === index ? 'scale-150 bg-primary' : ''}`} />
                     </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-bold text-foreground mb-0.5">
-                        {info.title}
-                      </h3>
-                      <p className="text-sm text-foreground/90 font-medium truncate">
-                        {info.link ? (
-                          <a 
-                            href={info.link}
-                            className="hover:text-primary transition-colors hover:underline"
-                          >
-                            {info.detail}
-                          </a>
-                        ) : (
-                          info.detail
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {info.subDetail}
-                      </p>
-                    </div>
-
-                    {/* Indicator */}
-                    <div className={`h-2 w-2 rounded-full bg-primary/40 transition-all duration-300 ${hoveredIndex === index ? 'scale-150 bg-primary' : ''}`} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-           
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
             {/* Service Area Badge */}
-            <div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <MapPin className="h-5 w-5 text-primary" />
+            <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 sm:mt-6 sm:p-4">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <div className="p-1.5 rounded-lg bg-primary/20 sm:p-2">
+                  <MapPin className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-foreground mb-1 flex items-center gap-2">
+                  <h4 className="font-bold text-xs text-foreground mb-1 flex items-center gap-2 sm:text-sm">
                     Área de Cobertura
-                    <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse sm:h-2 sm:w-2" />
                   </h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed sm:text-sm">
                     Concepción del Uruguay y zonas aledañas. Servicio personalizado en tu domicilio.
                   </p>
                 </div>
@@ -126,7 +126,7 @@ export function LocationSection() {
             </div>
           </div>
 
-          {/* Map Section - Takes more space */}
+          {/* Map Section */}
           <div className="lg:col-span-3 animate-in fade-in slide-in-from-right-8 duration-700" style={{ animationDelay: '300ms' }}>
             <Card className="h-full min-h-[400px] lg:min-h-[550px] border-2 overflow-hidden shadow-2xl group transition-all duration-500 hover:shadow-3xl">
               <div className="relative h-full">
@@ -179,8 +179,6 @@ export function LocationSection() {
             </Card>
           </div>
         </div>
-
-       
 
         {/* Decorative line */}
         <div className="mt-12 flex justify-center animate-in fade-in duration-1000" style={{ animationDelay: '700ms' }}>

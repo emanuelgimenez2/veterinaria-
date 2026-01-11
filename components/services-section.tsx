@@ -65,8 +65,8 @@ export function ServicesSection() {
           </p>
         </div>
 
-        {/* Services Grid with improved responsive */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 md:gap-8">
+        {/* Services Grid - 2 columnas en móvil, 4 en desktop */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-4 lg:gap-8">
           {services.map((service, index) => (
             <div
               key={index}
@@ -81,31 +81,31 @@ export function ServicesSection() {
                 {/* Animated gradient background */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg`} />
                 
-                <CardContent className="relative flex flex-col items-center gap-4 p-6 text-center sm:p-7 md:p-8 lg:gap-5">
+                <CardContent className="relative flex flex-col items-center gap-2 p-3 text-center sm:gap-3 sm:p-4 md:gap-4 md:p-6 lg:p-8">
                   {/* Icon container with pulse animation */}
-                  <div className={`relative rounded-2xl bg-gradient-to-br ${service.color} p-4 shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 md:p-5`}>
-                    <div className={`absolute inset-0 rounded-2xl ${service.color} blur-xl opacity-0 group-hover:opacity-70 transition-opacity duration-500`} />
+                  <div className={`relative rounded-xl bg-gradient-to-br ${service.color} p-2 shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 sm:p-3 md:rounded-2xl md:p-4`}>
+                    <div className={`absolute inset-0 rounded-xl md:rounded-2xl ${service.color} blur-xl opacity-0 group-hover:opacity-70 transition-opacity duration-500`} />
                     <service.icon 
-                      className={`relative h-8 w-8 md:h-10 md:w-10 ${service.iconColor} transition-transform duration-500 ${hoveredIndex === index ? 'scale-110' : ''}`}
+                      className={`relative h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 ${service.iconColor} transition-transform duration-500 ${hoveredIndex === index ? 'scale-110' : ''}`}
                       strokeWidth={2.5}
                     />
                   </div>
                   
                   {/* Title with slide animation */}
-                  <h3 className="text-lg font-bold sm:text-xl md:text-2xl transition-colors duration-300 group-hover:text-primary">
+                  <h3 className="text-xs font-bold sm:text-sm md:text-lg lg:text-xl transition-colors duration-300 group-hover:text-primary line-clamp-2">
                     {service.title}
                   </h3>
                   
-                  {/* Description with fade animation */}
-                  <p className="text-sm leading-relaxed text-muted-foreground sm:text-base md:text-base transition-all duration-300 group-hover:text-foreground/80">
+                  {/* Description with fade animation - oculta en móvil, visible desde sm */}
+                  <p className="hidden sm:block text-xs leading-relaxed text-muted-foreground sm:text-sm md:text-base transition-all duration-300 group-hover:text-foreground/80 line-clamp-3">
                     {service.description}
                   </p>
 
                   {/* Decorative dot indicator */}
-                  <div className="mt-2 flex gap-1.5">
-                    <div className={`h-1.5 w-1.5 rounded-full bg-primary/40 transition-all duration-300 ${hoveredIndex === index ? 'w-8 bg-primary' : ''}`} />
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary/40" />
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary/40" />
+                  <div className="mt-1 flex gap-1 sm:mt-2">
+                    <div className={`h-1 w-1 rounded-full bg-primary/40 transition-all duration-300 sm:h-1.5 sm:w-1.5 ${hoveredIndex === index ? 'w-4 bg-primary sm:w-8' : ''}`} />
+                    <div className="h-1 w-1 rounded-full bg-primary/40 sm:h-1.5 sm:w-1.5" />
+                    <div className="h-1 w-1 rounded-full bg-primary/40 sm:h-1.5 sm:w-1.5" />
                   </div>
                 </CardContent>
 

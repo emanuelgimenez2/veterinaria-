@@ -67,8 +67,8 @@ export function ProductsSection() {
           </p>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 md:gap-8">
+        {/* Products Grid - 2 columnas en móvil, 4 en desktop */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-4 lg:gap-8">
           {products.map((product, index) => (
             <div
               key={index}
@@ -79,7 +79,7 @@ export function ProductsSection() {
             >
               <Card className="group relative h-full overflow-hidden border-2 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 backdrop-blur-sm bg-background/95">
                 {/* Badge */}
-                <div className={`absolute top-3 left-3 z-10 px-3 py-1 rounded-full text-xs font-bold text-white ${product.badgeColor} shadow-lg animate-in slide-in-from-left-4 duration-500`}>
+                <div className={`absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${product.badgeColor} shadow-lg animate-in slide-in-from-left-4 duration-500 sm:top-3 sm:left-3 sm:px-3 sm:py-1 sm:text-xs`}>
                   {product.badge}
                 </div>
 
@@ -98,44 +98,44 @@ export function ProductsSection() {
                   </div>
                 </div>
 
-                <CardContent className="relative p-5 space-y-3">
+                <CardContent className="relative p-2.5 space-y-1.5 sm:p-4 sm:space-y-2 md:p-5 md:space-y-3">
                   {/* Rating */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 sm:gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${
+                        className={`h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4 ${
                           i < Math.floor(product.rating)
                             ? 'fill-yellow-400 text-yellow-400'
                             : 'fill-muted text-muted'
                         } transition-all duration-300`}
                       />
                     ))}
-                    <span className="ml-1 text-sm font-medium text-muted-foreground">
+                    <span className="ml-0.5 text-[10px] sm:text-xs md:text-sm font-medium text-muted-foreground sm:ml-1">
                       {product.rating}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-lg font-bold leading-tight transition-colors duration-300 group-hover:text-primary sm:text-xl line-clamp-2">
+                  <h3 className="text-xs font-bold leading-tight transition-colors duration-300 group-hover:text-primary sm:text-sm md:text-lg lg:text-xl line-clamp-2">
                     {product.name}
                   </h3>
 
-                  {/* Description */}
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 transition-colors duration-300 group-hover:text-foreground/70">
+                  {/* Description - oculta en móvil */}
+                  <p className="hidden sm:block text-xs text-muted-foreground leading-relaxed line-clamp-2 transition-colors duration-300 group-hover:text-foreground/70 md:text-sm">
                     {product.description}
                   </p>
 
                   {/* Progress indicator */}
-                  <div className="flex gap-1 pt-3">
-                    <div className={`h-1 rounded-full bg-primary transition-all duration-300 ${hoveredIndex === index ? 'w-12' : 'w-6'}`} />
-                    <div className="h-1 w-6 rounded-full bg-primary/30" />
-                    <div className="h-1 w-6 rounded-full bg-primary/30" />
+                  <div className="flex gap-0.5 pt-1 sm:gap-1 sm:pt-2 md:pt-3">
+                    <div className={`h-0.5 rounded-full bg-primary transition-all duration-300 sm:h-1 ${hoveredIndex === index ? 'w-6 sm:w-12' : 'w-3 sm:w-6'}`} />
+                    <div className="h-0.5 w-3 rounded-full bg-primary/30 sm:h-1 sm:w-6" />
+                    <div className="h-0.5 w-3 rounded-full bg-primary/30 sm:h-1 sm:w-6" />
                   </div>
                 </CardContent>
 
                 {/* Bottom border animation */}
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/0 via-primary to-primary/0 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 sm:h-1" />
               </Card>
             </div>
           ))}
