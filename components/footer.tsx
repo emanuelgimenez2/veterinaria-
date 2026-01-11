@@ -66,31 +66,36 @@ export function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '100ms' }}>
-            <h3 className="mb-5 text-base font-bold text-foreground md:text-lg flex items-center gap-2">
-              Enlaces Rápidos
-              <div className="h-[2px] flex-1 bg-gradient-to-r from-primary/50 to-transparent max-w-[60px]" />
-            </h3>
-            <ul className="space-y-3 text-sm">
-              {[
-                { href: "/", label: "Inicio" },
-                { href: "/turno", label: "Sacar Turno" },
-                { href: "/servicios", label: "Servicios" },
-                { href: "/productos", label: "Productos" },
-                { href: "/sobre-nosotros", label: "Sobre Nosotros" },
-              ].map((link, index) => (
-                <li key={index}>
-                  <Link 
-                    href={link.href} 
-                    className="group flex items-center gap-2 text-muted-foreground transition-all hover:text-primary hover:translate-x-1"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary/40 transition-all group-hover:w-3 group-hover:bg-primary" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <div
+  className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-700"
+  style={{ animationDelay: "100ms" }}
+>
+  <h3 className="mb-5 text-base font-bold text-foreground md:text-lg flex items-center gap-2">
+    Enlaces Rápidos
+    <div className="h-[2px] flex-1 bg-gradient-to-r from-primary/50 to-transparent max-w-[60px]" />
+  </h3>
+
+  <ul className="space-y-3 text-sm">
+    {[
+      { href: "/#inicio", label: "Inicio" },
+      { href: "/turno", label: "Sacar Turno" },        // página aparte
+      { href: "/#servicios", label: "Servicios" },
+      { href: "/#productos", label: "Productos" },
+      { href: "/#sobre-nosotros", label: "Sobre Nosotros" },
+    ].map((link, index) => (
+      <li key={index}>
+        <Link
+          href={link.href}
+          className="group flex items-center gap-2 text-muted-foreground transition-all hover:text-primary hover:translate-x-1"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-primary/40 transition-all group-hover:w-3 group-hover:bg-primary" />
+          {link.label}
+        </Link>
+      </li>
+    ))}
+  </ul>
+</div>
+
 
           {/* Services */}
           <div className="lg:col-span-3 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms' }}>

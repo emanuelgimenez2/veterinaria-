@@ -11,8 +11,10 @@ export default function HomePage() {
       <div className="container mx-auto py-8">
         <HeroCarousel />
       </div>
-      <ServicesSection />
-      <ProductsSection />
+       <section id="servicios">
+        <ServicesSection />
+      </section>
+      <ProductsSection  />
       <LocationSection />
       <TestimonialsSection />
       <Footer />
