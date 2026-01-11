@@ -9,10 +9,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createTurno, createCliente, getClienteByEmail, createMascota, getMascotasByClienteId } from "@/lib/firebase/firestore"
+import { createTurno, createCliente, getClienteByEmail, createMascota, getMascotasByClienteId, getDiasBloqueados, getTurnos } from "@/lib/firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { CalendarIcon, Clock, User, Heart, FileText, PlusCircle } from "lucide-react"
+import { CalendarIcon, Clock, User, Heart, FileText, PlusCircle, MapPin, CreditCard } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { cn } from "@/lib/utils"
 
 export default function TurnoPage() {
   const router = useRouter()
@@ -21,17 +26,27 @@ export default function TurnoPage() {
   const [clienteExistente, setClienteExistente] = useState<any>(null)
   const [mascotas, setMascotas] = useState<any[]>([])
   const [mostrarNuevaMascota, setMostrarNuevaMascota] = useState(true)
+  const [selectedDate, setSelectedDate] = useState<Date>()
+  const [diasBloqueados, setDiasBloqueados] = useState<string[]>([])
+  const [turnosExistentes, setTurnosExistentes] = useState<any[]>([])
+  const [horariosDisponibles, setHorariosDisponibles] = useState<string[]>([
+    "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
+    "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"
+  ])
 
   const [formData, setFormData] = useState({
     nombre: "",
     telefono: "",
     email: "",
+    dni: "",
+    domicilio: "",
     mascotaExistenteId: "",
     nombreMascota: "",
     tipoMascota: "",
     edadMascota: "",
     razaMascota: "",
     pesoMascota: "",
+    servicio: "",
     motivo: "",
     fecha: "",
     hora: "",
@@ -48,10 +63,11 @@ export default function TurnoPage() {
             setFormData(prev => ({
               ...prev,
               nombre: cliente.nombre || prev.nombre,
-              telefono: cliente.telefono || prev.telefono
+              telefono: cliente.telefono || prev.telefono,
+              dni: cliente.dni || prev.dni,
+              domicilio: cliente.domicilio || prev.domicilio
             }))
             
-            // Cargar mascotas del cliente
             const mascotasCliente = await getMascotasByClienteId(cliente.id)
             setMascotas(mascotasCliente)
             setMostrarNuevaMascota(mascotasCliente.length === 0)
@@ -70,10 +86,51 @@ export default function TurnoPage() {
     return () => clearTimeout(debounce)
   }, [formData.email])
 
+  // Cargar días bloqueados y turnos al montar
+  useEffect(() => {
+    const cargarDisponibilidad = async () => {
+      try {
+        const diasBloqueadosData = await getDiasBloqueados()
+        const fechasBloqueadas = diasBloqueadosData.map((d: any) => d.fecha)
+        setDiasBloqueados(fechasBloqueadas)
+
+        const turnosData = await getTurnos()
+        setTurnosExistentes(turnosData)
+      } catch (error) {
+        console.error("Error cargando disponibilidad:", error)
+      }
+    }
+
+    cargarDisponibilidad()
+  }, [])
+
+  // Actualizar horarios disponibles cuando cambia la fecha
+  useEffect(() => {
+    if (selectedDate) {
+      const fechaSeleccionada = format(selectedDate, "yyyy-MM-dd")
+      const turnosDelDia = turnosExistentes.filter(
+        (t: any) => t.fecha === fechaSeleccionada && t.estado !== "cancelado"
+      )
+      
+      const horariosOcupados = turnosDelDia.map((t: any) => t.hora)
+      const todosLosHorarios = [
+        "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
+        "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"
+      ]
+      
+      const disponibles = todosLosHorarios.filter(h => !horariosOcupados.includes(h))
+      setHorariosDisponibles(disponibles)
+      
+      // Si el horario seleccionado ya no está disponible, limpiarlo
+      if (formData.hora && !disponibles.includes(formData.hora)) {
+        handleChange("hora", "")
+      }
+    }
+  }, [selectedDate, turnosExistentes])
+
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     
-    // Si selecciona una mascota existente, ocultar form de nueva mascota
     if (field === "mascotaExistenteId") {
       setMostrarNuevaMascota(value === "nueva")
     }
@@ -93,6 +150,8 @@ export default function TurnoPage() {
           nombre: formData.nombre,
           telefono: formData.telefono,
           email: formData.email,
+          dni: formData.dni,
+          domicilio: formData.domicilio,
         })
         clienteId = clienteRef.id
       }
@@ -107,7 +166,6 @@ export default function TurnoPage() {
           peso: formData.pesoMascota,
         })
         mascotaId = mascotaRef.id
-        // La historia clínica se crea automáticamente en createMascota
       }
 
       // 3. Obtener datos de la mascota
@@ -126,12 +184,15 @@ export default function TurnoPage() {
           nombre: formData.nombre,
           telefono: formData.telefono,
           email: formData.email,
+          dni: formData.dni,
+          domicilio: formData.domicilio,
         },
         mascota: {
           nombre: mascotaSeleccionada.nombre,
           tipo: mascotaSeleccionada.tipo,
           motivo: formData.motivo,
         },
+        servicio: formData.servicio,
         fecha: formData.fecha,
         hora: formData.hora,
         estado: "pendiente",
@@ -201,7 +262,7 @@ export default function TurnoPage() {
 
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="nombre" className="text-sm font-semibold flex items-center gap-2">
+                    <Label htmlFor="nombre" className="text-sm font-semibold">
                       Nombre y Apellido *
                     </Label>
                     <Input
@@ -214,6 +275,24 @@ export default function TurnoPage() {
                       disabled={!!clienteExistente}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dni" className="text-sm font-semibold flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      DNI *
+                    </Label>
+                    <Input
+                      id="dni"
+                      placeholder="12345678"
+                      value={formData.dni}
+                      onChange={(e) => handleChange("dni", e.target.value)}
+                      required
+                      className="h-11 border-2 focus-visible:ring-primary/50"
+                      disabled={!!clienteExistente}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="telefono" className="text-sm font-semibold">
                       Teléfono *
@@ -229,23 +308,38 @@ export default function TurnoPage() {
                       disabled={!!clienteExistente}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-semibold">
+                      Email *
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="juan@ejemplo.com"
+                      value={formData.email}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                      required
+                      className="h-11 border-2 focus-visible:ring-primary/50"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold">
-                    Email *
+                  <Label htmlFor="domicilio" className="text-sm font-semibold flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Domicilio (para la visita) *
                   </Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="juan@ejemplo.com"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
+                    id="domicilio"
+                    placeholder="Calle 123, Barrio, Ciudad, Provincia"
+                    value={formData.domicilio}
+                    onChange={(e) => handleChange("domicilio", e.target.value)}
                     required
                     className="h-11 border-2 focus-visible:ring-primary/50"
+                    disabled={!!clienteExistente}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Ingresa tu email para verificar si ya estás registrado
+                    Ingresa tu email arriba para verificar si ya estás registrado
                   </p>
                 </div>
               </div>
@@ -319,7 +413,7 @@ export default function TurnoPage() {
                         <Label htmlFor="tipoMascota" className="text-sm font-semibold">
                           Tipo de Mascota *
                         </Label>
-                        <Select value={formData.tipoMascota} onValueChange={(value) => handleChange("tipoMascota", value)}>
+                        <Select value={formData.tipoMascota} onValueChange={(value) => handleChange("tipoMascota", value)} required>
                           <SelectTrigger id="tipoMascota" className="h-11 border-2">
                             <SelectValue placeholder="Selecciona..." />
                           </SelectTrigger>
@@ -375,9 +469,47 @@ export default function TurnoPage() {
                   </>
                 )}
 
+                {/* Selector de Servicio */}
                 <div className="space-y-2">
-                  <Label htmlFor="motivo" className="text-sm font-semibold flex items-center gap-2">
+                  <Label htmlFor="servicio" className="text-sm font-semibold flex items-center gap-2">
                     <FileText className="h-4 w-4" />
+                    Servicio Requerido *
+                  </Label>
+                  <Select value={formData.servicio} onValueChange={(value) => handleChange("servicio", value)} required>
+                    <SelectTrigger id="servicio" className="h-auto min-h-[44px] border-2">
+                      <SelectValue placeholder="Selecciona el servicio que necesitas..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="consulta-general">
+                        <div className="flex flex-col items-start py-2">
+                          <span className="font-semibold text-sm">🩺 Consultas Generales</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">Exámenes completos y diagnósticos profesionales para tu mascota</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="telemedicina">
+                        <div className="flex flex-col items-start py-2">
+                          <span className="font-semibold text-sm">💻 Telemedicina</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">Procedimientos para detectar online y con rapidez el diagnóstico</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="vacunacion">
+                        <div className="flex flex-col items-start py-2">
+                          <span className="font-semibold text-sm">💉 Vacunación</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">Plan de vacunación completo para proteger a tu mascota</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="urgencias">
+                        <div className="flex flex-col items-start py-2">
+                          <span className="font-semibold text-sm">🚨 Urgencias</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">Atención de emergencia las 24 horas del día</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="motivo" className="text-sm font-semibold">
                     Motivo de la Consulta *
                   </Label>
                   <Textarea
@@ -419,29 +551,88 @@ export default function TurnoPage() {
                       <CalendarIcon className="h-4 w-4" />
                       Fecha *
                     </Label>
-                    <Input
-                      id="fecha"
-                      type="date"
-                      value={formData.fecha}
-                      onChange={(e) => handleChange("fecha", e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      required
-                      className="h-11 border-2 focus-visible:ring-primary/50"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full h-12 justify-start text-left font-normal border-2",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? (
+                            format(selectedDate, "PPP", { locale: es })
+                          ) : (
+                            <span>Selecciona una fecha</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => {
+                            setSelectedDate(date)
+                            if (date) {
+                              handleChange("fecha", format(date, "yyyy-MM-dd"))
+                            }
+                          }}
+                          disabled={(date) => {
+                            // Deshabilitar fechas pasadas
+                            if (date < new Date(new Date().setHours(0, 0, 0, 0))) return true
+                            
+                            // Deshabilitar domingos (0 = domingo)
+                            if (date.getDay() === 0) return true
+                            
+                            // Deshabilitar días bloqueados
+                            const fechaStr = format(date, "yyyy-MM-dd")
+                            if (diasBloqueados.includes(fechaStr)) return true
+                            
+                            // Deshabilitar días llenos (13 turnos = todos los horarios ocupados)
+                            const turnosDelDia = turnosExistentes.filter(
+                              (t: any) => t.fecha === fechaStr && t.estado !== "cancelado"
+                            )
+                            if (turnosDelDia.length >= 13) return true
+                            
+                            return false
+                          }}
+                          initialFocus
+                          locale={es}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <p className="text-xs text-muted-foreground">Selecciona una fecha disponible</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="hora" className="text-sm font-semibold flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      Hora *
+                      Horario *
                     </Label>
-                    <Input
-                      id="hora"
-                      type="time"
-                      value={formData.hora}
-                      onChange={(e) => handleChange("hora", e.target.value)}
-                      required
-                      className="h-11 border-2 focus-visible:ring-primary/50"
-                    />
+                    <Select value={formData.hora} onValueChange={(value) => handleChange("hora", value)} required>
+                      <SelectTrigger className="h-12 border-2 text-base">
+                        <SelectValue placeholder="Selecciona un horario..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {horariosDisponibles.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground">
+                            No hay horarios disponibles para esta fecha
+                          </div>
+                        ) : (
+                          horariosDisponibles.map((hora) => (
+                            <SelectItem key={hora} value={hora}>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span>{hora} hs</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {horariosDisponibles.length} horario{horariosDisponibles.length !== 1 ? 's' : ''} disponible{horariosDisponibles.length !== 1 ? 's' : ''} (8:00 a 20:00 hs)
+                    </p>
                   </div>
                 </div>
 

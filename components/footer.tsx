@@ -62,27 +62,7 @@ export function Footer() {
               Cuidado profesional y amoroso para tus mascotas. Especialistas en cardiología veterinaria con más de 10 años de experiencia.
             </p>
             
-            {/* Newsletter */}
-            <div className="space-y-3 pt-2">
-              <p className="text-sm font-semibold text-foreground">Suscríbete a nuestro newsletter</p>
-              <form onSubmit={handleSubscribe} className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-10 text-sm border-2 focus-visible:ring-primary/50"
-                  required
-                />
-                <Button 
-                  type="submit" 
-                  size="icon"
-                  className="h-10 w-10 flex-shrink-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
-            </div>
+           
           </div>
 
           {/* Quick Links */}

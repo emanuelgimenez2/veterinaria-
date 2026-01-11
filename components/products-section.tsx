@@ -1,15 +1,13 @@
 "use client"
 
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ShoppingCart, Eye, Star } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Star } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
 const products = [
   {
     name: "Alimento Premium Perros",
-    price: "$45.000",
     image: "/premium-dog-food-bag.png",
     description: "Nutrición balanceada para perros adultos",
     rating: 4.8,
@@ -18,7 +16,6 @@ const products = [
   },
   {
     name: "Alimento Premium Gatos",
-    price: "$38.000",
     image: "/premium-cat-food-bag.jpg",
     description: "Fórmula especial para gatos adultos",
     rating: 4.9,
@@ -27,7 +24,6 @@ const products = [
   },
   {
     name: "Collar Antipulgas",
-    price: "$25.000",
     image: "/flea-collar-for-pets.jpg",
     description: "Protección por 8 meses",
     rating: 4.7,
@@ -36,7 +32,6 @@ const products = [
   },
   {
     name: "Juguete Interactivo",
-    price: "$18.000",
     image: "/interactive-pet-toy.jpg",
     description: "Estimula la mente de tu mascota",
     rating: 4.6,
@@ -96,25 +91,6 @@ export function ProductsSection() {
                     fill
                     className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-2"
                   />
-                  
-                  {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
-                    <div className="absolute inset-0 flex items-center justify-center gap-3">
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className="rounded-full shadow-lg transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        className="rounded-full shadow-lg transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-75 hover:scale-110"
-                      >
-                        <ShoppingCart className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </div>
 
                   {/* Shine effect */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
@@ -150,52 +126,19 @@ export function ProductsSection() {
                     {product.description}
                   </p>
 
-                  {/* Price */}
-                  <div className="flex items-baseline gap-2 pt-2">
-                    <p className="text-2xl font-bold text-primary md:text-3xl">
-                      {product.price}
-                    </p>
-                    <span className="text-sm text-muted-foreground line-through opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      ${parseInt(product.price.replace(/[$.]/g, '')) + 5000}
-                    </span>
-                  </div>
-
                   {/* Progress indicator */}
-                  <div className="flex gap-1 pt-1">
+                  <div className="flex gap-1 pt-3">
                     <div className={`h-1 rounded-full bg-primary transition-all duration-300 ${hoveredIndex === index ? 'w-12' : 'w-6'}`} />
                     <div className="h-1 w-6 rounded-full bg-primary/30" />
                     <div className="h-1 w-6 rounded-full bg-primary/30" />
                   </div>
                 </CardContent>
 
-                <CardFooter className="p-5 pt-0">
-                  <Button 
-                    variant="outline" 
-                    className="w-full group/btn border-2 font-semibold transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-lg hover:scale-105"
-                  >
-                    <span className="transition-transform duration-300 group-hover/btn:scale-110">
-                      Ver Detalle
-                    </span>
-                  </Button>
-                </CardFooter>
-
                 {/* Bottom border animation */}
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
               </Card>
             </div>
           ))}
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="mt-16 text-center animate-in fade-in duration-1000" style={{ animationDelay: '800ms' }}>
-          <Button 
-            size="lg" 
-            variant="outline"
-            className="group border-2 font-semibold hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-xl hover:scale-105 transition-all duration-300"
-          >
-            Ver Todos los Productos
-            <ShoppingCart className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
-          </Button>
         </div>
 
         {/* Decorative line */}

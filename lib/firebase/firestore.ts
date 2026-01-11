@@ -20,6 +20,8 @@ export interface Cliente {
   nombre: string
   telefono: string
   email: string
+  dni?: string
+  domicilio?: string
 }
 
 export interface Mascota {
@@ -31,16 +33,22 @@ export interface Mascota {
 export interface Turno {
   id?: string
   clienteId: string
+  mascotaId?: string
   cliente: {
     nombre: string
     telefono: string
     email: string
+    dni?: string
+    domicilio?: string
   }
   mascota: {
     nombre: string
     tipo: string
-    motivo: string
+    motivo?: string
   }
+  servicio?: string
+  fecha?: string
+  hora?: string
   turno: {
     fecha: string
     hora: string
@@ -234,15 +242,37 @@ export async function deleteHistoria(
 }
 
 // ============ TURNOS ============
-export async function createTurno(turnoData: Omit<Turno, "id">) {
+export async function createTurno(turnoData: Partial<Turno>) {
   const turnosRef = collection(db, "turnos")
-  return await addDoc(turnosRef, {
-    ...turnoData,
+  
+  // Asegurarnos de que la estructura sea correcta
+  const turnoCompleto = {
+    clienteId: turnoData.clienteId || "",
+    mascotaId: turnoData.mascotaId || "",
+    cliente: {
+      nombre: turnoData.cliente?.nombre || "",
+      telefono: turnoData.cliente?.telefono || "",
+      email: turnoData.cliente?.email || "",
+      dni: turnoData.cliente?.dni || "",
+      domicilio: turnoData.cliente?.domicilio || "",
+    },
+    mascota: {
+      nombre: turnoData.mascota?.nombre || "",
+      tipo: turnoData.mascota?.tipo || "",
+      motivo: turnoData.mascota?.motivo || "",
+    },
+    servicio: turnoData.servicio || "",
+    fecha: turnoData.fecha || turnoData.turno?.fecha || "",
+    hora: turnoData.hora || turnoData.turno?.hora || "",
     turno: {
-      ...turnoData.turno,
+      fecha: turnoData.fecha || turnoData.turno?.fecha || "",
+      hora: turnoData.hora || turnoData.turno?.hora || "",
       timestamp: serverTimestamp(),
     },
-  })
+    estado: turnoData.estado || "pendiente",
+  }
+  
+  return await addDoc(turnosRef, turnoCompleto)
 }
 
 export async function getTurnos() {
@@ -260,4 +290,25 @@ export async function updateTurno(turnoId: string, data: Partial<Turno>) {
 export async function deleteTurno(turnoId: string) {
   const turnoRef = doc(db, "turnos", turnoId)
   return await deleteDoc(turnoRef)
+}
+
+// ============ DISPONIBILIDAD ============
+export async function getDiasBloqueados() {
+  const diasRef = collection(db, "diasBloqueados")
+  const snapshot = await getDocs(diasRef)
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function bloquearDia(fecha: string, motivo?: string) {
+  const diasRef = collection(db, "diasBloqueados")
+  return await addDoc(diasRef, {
+    fecha,
+    motivo: motivo || "Día bloqueado",
+    fechaCreacion: new Date().toISOString()
+  })
+}
+
+export async function desbloquearDia(diaId: string) {
+  const diaRef = doc(db, "diasBloqueados", diaId)
+  return await deleteDoc(diaRef)
 }
