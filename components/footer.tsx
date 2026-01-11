@@ -76,7 +76,7 @@ export function Footer() {
                 { href: "/", label: "Inicio" },
                 { href: "/turno", label: "Sacar Turno" },
                 { href: "/#servicios", label: "Servicios" },
-                { href: "/#products", label: "Productos" },
+                { href: "/#productos", label: "Productos" },
                 { href: "/#sobre-nosotros", label: "Sobre Nosotros" },
               ].map((link, index) => (
                 <li key={index}>
