@@ -66,36 +66,31 @@ export function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div
-  className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-700"
-  style={{ animationDelay: "100ms" }}
->
-  <h3 className="mb-5 text-base font-bold text-foreground md:text-lg flex items-center gap-2">
-    Enlaces Rápidos
-    <div className="h-[2px] flex-1 bg-gradient-to-r from-primary/50 to-transparent max-w-[60px]" />
-  </h3>
-
-  <ul className="space-y-3 text-sm">
-    {[
-      { href: "/#inicio", label: "Inicio" },
-      { href: "/turno", label: "Sacar Turno" },        // página aparte
-      { href: "/#servicios", label: "Servicios" },
-      { href: "/#productos", label: "Productos" },
-      { href: "/#sobre-nosotros", label: "Sobre Nosotros" },
-    ].map((link, index) => (
-      <li key={index}>
-        <Link
-          href={link.href}
-          className="group flex items-center gap-2 text-muted-foreground transition-all hover:text-primary hover:translate-x-1"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-primary/40 transition-all group-hover:w-3 group-hover:bg-primary" />
-          {link.label}
-        </Link>
-      </li>
-    ))}
-  </ul>
-</div>
-
+          <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '100ms' }}>
+            <h3 className="mb-5 text-base font-bold text-foreground md:text-lg flex items-center gap-2">
+              Enlaces Rápidos
+              <div className="h-[2px] flex-1 bg-gradient-to-r from-primary/50 to-transparent max-w-[60px]" />
+            </h3>
+            <ul className="space-y-3 text-sm">
+              {[
+                { href: "/", label: "Inicio" },
+                { href: "/turno", label: "Sacar Turno" },
+                { href: "/#servicios", label: "Servicios" },
+                { href: "/#products", label: "Productos" },
+                { href: "/#sobre-nosotros", label: "Sobre Nosotros" },
+              ].map((link, index) => (
+                <li key={index}>
+                  <Link 
+                    href={link.href} 
+                    className="group flex items-center gap-2 text-muted-foreground transition-all hover:text-primary hover:translate-x-1"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary/40 transition-all group-hover:w-3 group-hover:bg-primary" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Services */}
           <div className="lg:col-span-3 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms' }}>
@@ -135,7 +130,7 @@ export function Footer() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground mb-0.5">Dirección</p>
-                  <span className="text-sm">Av. Principal 123, Buenos Aires</span>
+                  <span className="text-sm">Servicio a Domicilio</span>
                 </div>
               </li>
               <li className="flex items-start gap-3 group">
@@ -145,7 +140,7 @@ export function Footer() {
                 <div className="flex-1">
                   <p className="font-medium text-foreground mb-0.5">Teléfono</p>
                   <a href="tel:+541112345678" className="text-sm hover:text-primary transition-colors">
-                    +54 11 1234-5678
+                    +54 9 379 466-2600
                   </a>
                 </div>
               </li>
@@ -155,8 +150,8 @@ export function Footer() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground mb-0.5">Email</p>
-                  <a href="mailto:contacto@vetcare.com" className="text-sm hover:text-primary transition-colors break-all">
-                    contacto@vetcare.com
+                  <a href="mailto:veterinariapriscilas@gmail.com" className="text-sm hover:text-primary transition-colors break-all">
+                    veterinariapriscilas@gmail.com
                   </a>
                 </div>
               </li>

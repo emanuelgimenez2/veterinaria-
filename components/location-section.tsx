@@ -12,22 +12,22 @@ export function LocationSection() {
     {
       icon: Clock,
       title: "Horarios",
-      detail: "Lun-Vie: 9:00-20:00 | Sáb: 9:00-14:00",
+      detail: "Lun-Sáb: 8:00-20:00",
       subDetail: "Urgencias 24/7"
     },
     {
       icon: Phone,
       title: "Teléfono",
-      detail: "+54 11 1234-5678",
+      detail: "+54 9 379 466-2600",
       subDetail: "WhatsApp disponible",
-      link: "tel:+541112345678"
+      link: "tel:+54 9 379 466-2600"
     },
     {
       icon: Mail,
       title: "Email",
-      detail: "contacto@vetcare.com",
+      detail: "veterinariapriscilas@gmail.com",
       subDetail: "Respuesta en 24hs",
-      link: "mailto:contacto@vetcare.com"
+      link: "veterinariapriscilas@gmail.com"
     },
   ]
 
