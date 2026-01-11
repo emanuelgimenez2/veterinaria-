@@ -4,15 +4,28 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { signOut } from "@/lib/firebase/auth"
+import { signOut, checkIfUserIsAdmin } from "@/lib/firebase/auth"
 import { useRouter } from "next/navigation"
 import { Menu, X } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export function Navbar() {
   const { user } = useAuth()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const adminStatus = await checkIfUserIsAdmin(user.uid)
+        setIsAdmin(adminStatus)
+      } else {
+        setIsAdmin(false)
+      }
+    }
+    checkAdmin()
+  }, [user])
 
   const handleSignOut = async () => {
     await signOut()
@@ -82,15 +95,17 @@ export function Navbar() {
             </Link>
             {user ? (
               <>
-                <Link href="/admin">
-                  <Button 
-                    variant="outline" 
-                    size="default"
-                    className="font-medium border-2 hover:bg-primary/5 transition-colors"
-                  >
-                    Admin
-                  </Button>
-                </Link>
+                {isAdmin && (
+                  <Link href="/admin">
+                    <Button 
+                      variant="outline" 
+                      size="default"
+                      className="font-medium border-2 hover:bg-primary/5 transition-colors"
+                    >
+                      Admin
+                    </Button>
+                  </Link>
+                )}
                 <Button 
                   variant="ghost" 
                   onClick={handleSignOut} 
@@ -152,15 +167,17 @@ export function Navbar() {
               </Link>
               {user ? (
                 <>
-                  <Link href="/admin" onClick={closeMobileMenu}>
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="w-full bg-transparent border-2 font-medium hover:bg-primary/5 transition-colors"
-                    >
-                      Admin
-                    </Button>
-                  </Link>
+                  {isAdmin && (
+                    <Link href="/admin" onClick={closeMobileMenu}>
+                      <Button 
+                        variant="outline" 
+                        size="lg" 
+                        className="w-full bg-transparent border-2 font-medium hover:bg-primary/5 transition-colors"
+                      >
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
                   <Button 
                     variant="ghost" 
                     onClick={handleSignOut} 

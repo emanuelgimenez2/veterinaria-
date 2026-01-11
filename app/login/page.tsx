@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { signInWithGoogle } from "@/lib/firebase/auth"
+import { signInWithGoogle, checkIfUserIsAdmin } from "@/lib/firebase/auth"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Lock } from "lucide-react"
@@ -18,14 +18,25 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await signInWithGoogle()
+      const result = await signInWithGoogle()
+      
+      // Verificar si el usuario es admin
+      const isAdmin = await checkIfUserIsAdmin(result.user.uid)
 
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido al panel de administración.",
-      })
-
-      router.push("/admin")
+      if (isAdmin) {
+        toast({
+          title: "Inicio de sesión exitoso",
+          description: "Bienvenido al panel de administración.",
+        })
+        router.push("/admin")
+      } else {
+        toast({
+          title: "Acceso denegado",
+          description: "No tienes permisos de administrador.",
+          variant: "destructive",
+        })
+        router.push("/")
+      }
     } catch (error) {
       console.error("Login error:", error)
       toast({
