@@ -2,6 +2,7 @@ import { HeroCarousel } from "@/components/hero-carousel"
 import { ServicesSection } from "@/components/services-section"
 import { ProductsSection } from "@/components/products-section"
 import { LocationSection } from "@/components/location-section"
+import { NosotrosSection } from "@/components/nosotros-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
 import { Footer } from "@/components/footer"
 
@@ -14,7 +15,12 @@ export default function HomePage() {
        <section id="servicios">
         <ServicesSection />
       </section>
-      <ProductsSection  />
+      <section id="productos">
+        <ProductsSection  />
+      </section>
+      <section id="sobre-nosotros">
+        <NosotrosSection  />
+      </section>
       <LocationSection />
       <TestimonialsSection />
       <Footer />
