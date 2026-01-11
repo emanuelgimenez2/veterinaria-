@@ -300,7 +300,7 @@ export default function TurnoPage() {
                     <Input
                       id="telefono"
                       type="tel"
-                      placeholder="+54 11 1234-5678"
+                      placeholder="+54 9 379 466-2600"
                       value={formData.telefono}
                       onChange={(e) => handleChange("telefono", e.target.value)}
                       required

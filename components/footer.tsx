@@ -75,9 +75,9 @@ export function Footer() {
               {[
                 { href: "/", label: "Inicio" },
                 { href: "/turno", label: "Sacar Turno" },
-                { href: "/servicios", label: "Servicios" },
-                { href: "/productos", label: "Productos" },
-                { href: "/sobre-nosotros", label: "Sobre Nosotros" },
+                { href: "/#servicios", label: "Servicios" },
+                { href: "/#products", label: "Productos" },
+                { href: "/#sobre-nosotros", label: "Sobre Nosotros" },
               ].map((link, index) => (
                 <li key={index}>
                   <Link 
@@ -130,7 +130,7 @@ export function Footer() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground mb-0.5">Dirección</p>
-                  <span className="text-sm">Av. Principal 123, Buenos Aires</span>
+                  <span className="text-sm">Servicio a Domicilio</span>
                 </div>
               </li>
               <li className="flex items-start gap-3 group">
@@ -140,7 +140,7 @@ export function Footer() {
                 <div className="flex-1">
                   <p className="font-medium text-foreground mb-0.5">Teléfono</p>
                   <a href="tel:+541112345678" className="text-sm hover:text-primary transition-colors">
-                    +54 11 1234-5678
+                    +54 9 379 466-2600
                   </a>
                 </div>
               </li>
@@ -150,8 +150,8 @@ export function Footer() {
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-foreground mb-0.5">Email</p>
-                  <a href="mailto:contacto@vetcare.com" className="text-sm hover:text-primary transition-colors break-all">
-                    contacto@vetcare.com
+                  <a href="mailto:veterinariapriscilas@gmail.com" className="text-sm hover:text-primary transition-colors break-all">
+                    veterinariapriscilas@gmail.com
                   </a>
                 </div>
               </li>

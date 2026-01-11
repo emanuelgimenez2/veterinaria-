@@ -9,25 +9,25 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "VetCare - Clínica Veterinaria Moderna",
+  title: "Clínica Veterinaria Priscila Silva",
   description: "Cuidado profesional para tus mascotas. Servicios veterinarios de calidad.",
   generator: "v0.app",
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
+        url: "/icon-light.png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/icon-dark-32x32.png",
+        url: "/icon-dark.png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/icon.svg",
+        url: "/logo111.png",
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+    apple: "/logo111.png",
   },
 }
 
