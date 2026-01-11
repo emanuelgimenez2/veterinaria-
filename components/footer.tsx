@@ -163,7 +163,7 @@ export function Footer() {
               <div className="flex gap-2">
                 {[
                   { icon: Facebook, href: "https://facebook.com", name: "facebook", color: "hover:bg-blue-500" },
-                  { icon: Instagram, href: "https://instagram.com", name: "instagram", color: "hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500" },
+                  { icon: Instagram, href: "https://www.instagram.com/cardiologiavet.pri", name: "instagram", color: "hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500" },
                   { icon: Twitter, href: "https://twitter.com", name: "twitter", color: "hover:bg-sky-500" },
                 ].map((social, index) => (
                   <a
