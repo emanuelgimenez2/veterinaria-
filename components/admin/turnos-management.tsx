@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -43,19 +45,40 @@ import {
   FileText,
   Sparkles,
   Activity,
+  Lock,
+  Unlock,
+  Settings,
 } from "lucide-react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+
+interface ScheduleSettings {
+  startHour: number;
+  endHour: number;
+}
 
 export default function TurnosManagement() {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [blockDateDialogOpen, setBlockDateDialogOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
   const [editData, setEditData] = useState({ fecha: "", hora: "" });
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>({
+    startHour: 8,
+    endHour: 20,
+  });
+  const [tempSchedule, setTempSchedule] = useState<ScheduleSettings>({
+    startHour: 8,
+    endHour: 20,
+  });
+  const [selectedDateForBlock, setSelectedDateForBlock] = useState<string>("");
+  const [dateRangeStart, setDateRangeStart] = useState<string>("");
+  const [dateRangeEnd, setDateRangeEnd] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -89,10 +112,153 @@ export default function TurnosManagement() {
     }
   };
 
+  const fetchScheduleSettings = async () => {
+    try {
+      const docRef = doc(db, "settings", "schedule");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setScheduleSettings({
+          startHour: data.startHour || 8,
+          endHour: data.endHour || 20,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching schedule settings:", error);
+    }
+  };
+
   useEffect(() => {
     fetchTurnos();
     fetchBlockedDates();
+    fetchScheduleSettings();
   }, []);
+
+  const handleToggleBlockDate = async (dateStr: string) => {
+    try {
+      const isCurrentlyBlocked = blockedDates.includes(dateStr);
+      let newBlockedDates: string[];
+
+      if (isCurrentlyBlocked) {
+        // Unblock the date
+        newBlockedDates = blockedDates.filter((d) => d !== dateStr);
+        toast({
+          title: "Fecha habilitada",
+          description: `La fecha ${dateStr} ha sido habilitada`,
+        });
+      } else {
+        // Block the date
+        newBlockedDates = [...blockedDates, dateStr];
+        toast({
+          title: "Fecha bloqueada",
+          description: `La fecha ${dateStr} ha sido bloqueada`,
+        });
+      }
+
+      await setDoc(doc(db, "settings", "blockedDates"), {
+        dates: newBlockedDates,
+      });
+      setBlockedDates(newBlockedDates);
+    } catch (error) {
+      console.error("Error toggling block date:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado de la fecha",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleDateRange = async (action: "block" | "unblock") => {
+    if (!dateRangeStart || !dateRangeEnd) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar ambas fechas del rango",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const start = new Date(dateRangeStart + "T00:00:00");
+      const end = new Date(dateRangeEnd + "T00:00:00");
+
+      if (start > end) {
+        toast({
+          title: "Error",
+          description: "La fecha de inicio debe ser anterior a la de fin",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const datesToModify: string[] = [];
+      const currentDate = new Date(start);
+
+      while (currentDate <= end) {
+        const dateStr = currentDate.toISOString().split("T")[0];
+        datesToModify.push(dateStr);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      let newBlockedDates: string[];
+
+      if (action === "block") {
+        // Add dates to blocked list
+        newBlockedDates = [...new Set([...blockedDates, ...datesToModify])];
+        toast({
+          title: "Rango bloqueado",
+          description: `Se bloquearon ${datesToModify.length} fechas`,
+        });
+      } else {
+        // Remove dates from blocked list
+        newBlockedDates = blockedDates.filter(
+          (d) => !datesToModify.includes(d)
+        );
+        toast({
+          title: "Rango habilitado",
+          description: `Se habilitaron ${datesToModify.length} fechas`,
+        });
+      }
+
+      await setDoc(doc(db, "settings", "blockedDates"), {
+        dates: newBlockedDates,
+      });
+      setBlockedDates(newBlockedDates);
+      setBlockDateDialogOpen(false);
+      setDateRangeStart("");
+      setDateRangeEnd("");
+    } catch (error) {
+      console.error("Error toggling date range:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el rango de fechas",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateSchedule = async () => {
+    try {
+      await setDoc(doc(db, "settings", "schedule"), {
+        startHour: tempSchedule.startHour,
+        endHour: tempSchedule.endHour,
+      });
+      setScheduleSettings(tempSchedule);
+      setScheduleDialogOpen(false);
+      toast({
+        title: "Horario actualizado",
+        description: `Horario de atención: ${tempSchedule.startHour}:00 - ${tempSchedule.endHour}:00`,
+      });
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el horario",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleMarkCompleted = async (turnoId: string) => {
     try {
@@ -241,7 +407,11 @@ export default function TurnosManagement() {
 
   const getTimeSlots = () => {
     const slots = [];
-    for (let hour = 8; hour <= 20; hour++) {
+    for (
+      let hour = scheduleSettings.startHour;
+      hour <= scheduleSettings.endHour;
+      hour++
+    ) {
       slots.push(`${String(hour).padStart(2, "0")}:00`);
     }
     return slots;
@@ -254,12 +424,18 @@ export default function TurnosManagement() {
   const completados = selectedDateTurnos.filter(
     (t) => t.estado === "completado"
   ).length;
-  const totalSlots = 12;
+  const totalSlots = getTimeSlots().length;
   const ocupacion = (
     (selectedDateTurnos.filter((t) => t.estado !== "cancelado").length /
       totalSlots) *
     100
   ).toFixed(0);
+
+  const handleDateRightClick = (e: React.MouseEvent, dateStr: string) => {
+    e.preventDefault();
+    setSelectedDateForBlock(dateStr);
+    setBlockDateDialogOpen(true);
+  };
 
   const renderCalendar = () => {
     const { daysInMonth, startingDayOfWeek, year, month } =
@@ -302,49 +478,68 @@ export default function TurnosManagement() {
       else if (turnosCount >= 6) ocupacionLevel = "medium";
 
       days.push(
-        <button
-          key={day}
-          onClick={() => setSelectedDate(dateStr)}
-          className={`aspect-square p-1 border rounded-xl flex flex-col items-center justify-center relative group transition-all duration-300 ${
-            isBlocked
-              ? "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-pointer opacity-70 hover:opacity-90"
-              : isSelected
-              ? "bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-400 shadow-lg shadow-indigo-500/50 scale-105"
-              : isToday
-              ? "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-400"
-              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md hover:scale-105"
-          }`}
-        >
-          <span
-            className={`text-sm font-bold ${
-              isSelected
-                ? "text-white"
+        <div key={day} className="relative group aspect-square">
+          <button
+            onClick={() => setSelectedDate(dateStr)}
+            className={`w-full h-full p-1 border rounded-xl flex flex-col items-center justify-center relative transition-all duration-300 ${
+              isBlocked
+                ? "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-50"
+                : isSelected
+                ? "bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-400 shadow-lg shadow-indigo-500/50 scale-105"
                 : isToday
-                ? "text-emerald-700 dark:text-emerald-300"
-                : "text-slate-900 dark:text-white"
+                ? "bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-400"
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md hover:scale-105"
             }`}
           >
-            {day}
-          </span>
-          {turnosCount > 0 && !isBlocked && (
-            <div
-              className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-black ${
+            <span
+              className={`text-sm font-bold ${
                 isSelected
-                  ? "bg-white/30 text-white"
-                  : ocupacionLevel === "high"
-                  ? "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300"
-                  : ocupacionLevel === "medium"
-                  ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
-                  : "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300"
+                  ? "text-white"
+                  : isToday
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : "text-slate-900 dark:text-white"
               }`}
             >
-              {turnosCount}
-            </div>
-          )}
-          {isBlocked && (
-            <Ban className="absolute top-1 right-1 h-3 w-3 text-slate-400" />
-          )}
-        </button>
+              {day}
+            </span>
+            {turnosCount > 0 && !isBlocked && (
+              <div
+                className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-black ${
+                  isSelected
+                    ? "bg-white/30 text-white"
+                    : ocupacionLevel === "high"
+                    ? "bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300"
+                    : ocupacionLevel === "medium"
+                    ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
+                    : "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300"
+                }`}
+              >
+                {turnosCount}
+              </div>
+            )}
+            {isBlocked && (
+              <Ban className="absolute top-1 right-1 h-3 w-3 text-slate-400" />
+            )}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleBlockDate(dateStr);
+            }}
+            className={`absolute -top-1 -right-1 p-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 ${
+              isBlocked
+                ? "bg-emerald-500 hover:bg-emerald-600"
+                : "bg-rose-500 hover:bg-rose-600"
+            }`}
+            title={isBlocked ? "Habilitar fecha" : "Bloquear fecha"}
+          >
+            {isBlocked ? (
+              <Unlock className="h-3 w-3 text-white" />
+            ) : (
+              <Lock className="h-3 w-3 text-white" />
+            )}
+          </button>
+        </div>
       );
     }
 
@@ -397,6 +592,34 @@ export default function TurnosManagement() {
             </div>
           ))}
           {days}
+        </div>
+        <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedDateForBlock(selectedDate);
+                setBlockDateDialogOpen(true);
+              }}
+              className="flex-1 text-xs"
+            >
+              <Settings className="h-3 w-3 mr-1" />
+              Gestionar Fechas
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTempSchedule(scheduleSettings);
+                setScheduleDialogOpen(true);
+              }}
+              className="flex-1 text-xs"
+            >
+              <Clock className="h-3 w-3 mr-1" />
+              Horarios
+            </Button>
+          </div>
         </div>
         <div className="flex flex-wrap gap-3 text-xs pt-2 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2">
@@ -580,20 +803,25 @@ export default function TurnosManagement() {
         </div>
 
         {/* Current Time Indicator */}
-        {isToday && currentHour >= 8 && currentHour <= 20 && (
-          <div
-            className="absolute left-0 right-0 z-10 pointer-events-none"
-            style={{
-              top: `${(currentHour - 8) * 100 + (currentMinute / 60) * 100}px`,
-            }}
-          >
-            <div className="flex items-center">
-              <div className="w-14 h-px bg-gradient-to-r from-transparent to-indigo-500" />
-              <div className="w-3 h-3 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/50 animate-pulse" />
-              <div className="flex-1 h-px bg-gradient-to-r from-indigo-500 to-transparent" />
+        {isToday &&
+          currentHour >= scheduleSettings.startHour &&
+          currentHour <= scheduleSettings.endHour && (
+            <div
+              className="absolute left-0 right-0 z-10 pointer-events-none"
+              style={{
+                top: `${
+                  (currentHour - scheduleSettings.startHour) * 100 +
+                  (currentMinute / 60) * 100
+                }px`,
+              }}
+            >
+              <div className="flex items-center">
+                <div className="w-14 h-px bg-gradient-to-r from-transparent to-indigo-500" />
+                <div className="w-3 h-3 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/50 animate-pulse" />
+                <div className="flex-1 h-px bg-gradient-to-r from-indigo-500 to-transparent" />
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     );
   };
@@ -610,23 +838,23 @@ export default function TurnosManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-2 sm:p-4 lg:p-8">
       {/* Header */}
-      <div className="mb-6 sm:mb-8 relative">
+      <div className="mb-3 sm:mb-6 lg:mb-8 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl" />
-        <div className="relative backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/20 dark:border-slate-700/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl shadow-indigo-500/50">
+        <div className="relative backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/20 dark:border-slate-700/50 rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-8 shadow-2xl">
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+            <div className="p-2 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl lg:rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl shadow-indigo-500/50">
               <CalendarIcon
-                className="h-6 w-6 sm:h-8 sm:w-8 text-white"
+                className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-white"
                 strokeWidth={2}
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 truncate">
+              <h1 className="text-lg sm:text-2xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 truncate">
                 Gestión de Turnos
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 mt-1 text-xs sm:text-sm lg:text-base font-medium truncate">
+              <p className="text-slate-600 dark:text-slate-400 mt-0.5 sm:mt-1 text-[10px] sm:text-xs lg:text-base font-medium truncate">
                 {new Date(selectedDate + "T00:00:00").toLocaleDateString(
                   "es-AR",
                   {
@@ -642,24 +870,24 @@ export default function TurnosManagement() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-12">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6 lg:grid-cols-12">
         {/* Sidebar: Calendario y Stats */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-3 sm:space-y-4 lg:space-y-6">
           {/* Calendario */}
           <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+            <CardHeader className="pb-2 sm:pb-3 lg:pb-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 lg:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
                   <CalendarIcon
-                    className="h-5 w-5 text-white"
+                    className="h-4 w-4 sm:h-5 sm:w-5 text-white"
                     strokeWidth={2.5}
                   />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                  <CardTitle className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 dark:text-white">
                     Calendario
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
+                  <CardDescription className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                     Selecciona una fecha
                   </CardDescription>
                 </div>
@@ -670,16 +898,19 @@ export default function TurnosManagement() {
 
           {/* Stats del día */}
           <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
-                  <Activity className="h-5 w-5 text-white" strokeWidth={2.5} />
+            <CardHeader className="pb-2 sm:pb-3 lg:pb-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 lg:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
+                  <Activity
+                    className="h-4 w-4 sm:h-5 sm:w-5 text-white"
+                    strokeWidth={2.5}
+                  />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                  <CardTitle className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 dark:text-white">
                     Estadísticas del Día
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
+                  <CardDescription className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                     {new Date(selectedDate + "T00:00:00").toLocaleDateString(
                       "es-AR",
                       {
@@ -691,24 +922,24 @@ export default function TurnosManagement() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2 sm:space-y-3 lg:space-y-4">
               {/* Ocupación */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs sm:text-sm">
+              <div className="space-y-1 sm:space-y-2">
+                <div className="flex items-center justify-between text-[10px] sm:text-xs lg:text-sm">
                   <span className="font-semibold text-slate-700 dark:text-slate-300">
                     Ocupación del día
                   </span>
-                  <span className="font-black text-base sm:text-lg text-indigo-600 dark:text-indigo-400">
+                  <span className="font-black text-sm sm:text-base lg:text-lg text-indigo-600 dark:text-indigo-400">
                     {ocupacion}%
                   </span>
                 </div>
-                <div className="h-2.5 sm:h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div className="h-2 sm:h-2.5 lg:h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500 shadow-lg"
                     style={{ width: `${ocupacion}%` }}
                   />
                 </div>
-                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">
+                <p className="text-[9px] sm:text-[10px] lg:text-xs text-slate-500 dark:text-slate-500">
                   {
                     selectedDateTurnos.filter((t) => t.estado !== "cancelado")
                       .length
@@ -718,20 +949,20 @@ export default function TurnosManagement() {
               </div>
 
               {/* Pendientes */}
-              <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200 dark:border-amber-800">
+              <div className="p-2 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200 dark:border-amber-800">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-amber-500 shadow-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
+                    <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-amber-500 shadow-lg">
                       <Clock
-                        className="h-4 w-4 sm:h-5 sm:w-5 text-white"
+                        className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
                         strokeWidth={2.5}
                       />
                     </div>
                     <div>
-                      <p className="text-[10px] sm:text-xs font-semibold text-amber-700 dark:text-amber-300">
+                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-amber-700 dark:text-emerald-300">
                         Pendientes
                       </p>
-                      <p className="text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-100">
+                      <p className="text-lg sm:text-xl lg:text-2xl font-black text-amber-900 dark:text-emerald-100">
                         {pendientes}
                       </p>
                     </div>
@@ -740,20 +971,20 @@ export default function TurnosManagement() {
               </div>
 
               {/* Completados */}
-              <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-200 dark:border-emerald-800">
+              <div className="p-2 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-200 dark:border-emerald-800">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-500 shadow-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
+                    <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-emerald-500 shadow-lg">
                       <CheckCircle2
-                        className="h-4 w-4 sm:h-5 sm:w-5 text-white"
+                        className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
                         strokeWidth={2.5}
                       />
                     </div>
                     <div>
-                      <p className="text-[10px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                         Completados
                       </p>
-                      <p className="text-xl sm:text-2xl font-black text-emerald-900 dark:text-emerald-100">
+                      <p className="text-lg sm:text-xl lg:text-2xl font-black text-emerald-900 dark:text-emerald-100">
                         {completados}
                       </p>
                     </div>
@@ -773,21 +1004,21 @@ export default function TurnosManagement() {
 
                   if (proximoTurno) {
                     return (
-                      <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 border-2 border-rose-300 dark:border-rose-700">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-rose-600 dark:text-rose-400" />
-                          <p className="text-[10px] sm:text-xs font-bold text-rose-700 dark:text-rose-300">
+                      <div className="p-2 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 border-2 border-rose-300 dark:border-rose-700">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                          <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 text-rose-600 dark:text-rose-400" />
+                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-bold text-rose-700 dark:text-rose-300">
                             PRÓXIMO TURNO
                           </p>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-base sm:text-lg font-black text-rose-900 dark:text-rose-100">
+                        <div className="space-y-0.5 sm:space-y-1">
+                          <p className="text-sm sm:text-base lg:text-lg font-black text-rose-900 dark:text-rose-100">
                             {proximoTurno.turno.hora}
                           </p>
-                          <p className="text-xs sm:text-sm font-semibold text-rose-800 dark:text-rose-200">
+                          <p className="text-[10px] sm:text-xs lg:text-sm font-semibold text-rose-800 dark:text-rose-200">
                             {proximoTurno.cliente.nombre}
                           </p>
-                          <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400">
+                          <p className="text-[9px] sm:text-[10px] lg:text-xs text-rose-600 dark:text-rose-400">
                             🐾 {proximoTurno.mascota.nombre}
                           </p>
                         </div>
@@ -802,66 +1033,66 @@ export default function TurnosManagement() {
         {/* Timeline Principal */}
         <div className="lg:col-span-8">
           <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl">
-            <CardHeader className="pb-3 sm:pb-4 border-b border-slate-200 dark:border-slate-800">
+            <CardHeader className="pb-2 sm:pb-3 lg:pb-4 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-3">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                  <div className="p-1.5 sm:p-2 lg:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
                     <CalendarIcon
-                      className="h-4 w-4 sm:h-5 sm:w-5 text-white"
+                      className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
                       strokeWidth={2.5}
                     />
                   </div>
                   <div>
-                    <CardTitle className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white">
+                    <CardTitle className="text-xs sm:text-sm lg:text-lg font-bold text-slate-900 dark:text-white">
                       Timeline del Día
                     </CardTitle>
-                    <CardDescription className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
+                    <CardDescription className="text-[9px] sm:text-[10px] lg:text-xs text-slate-600 dark:text-slate-400">
                       {selectedDateTurnos.length} turnos agendados
                     </CardDescription>
                   </div>
                 </div>
                 {isDateBlocked(selectedDate) && (
-                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border-0 text-[10px] sm:text-xs">
-                    <Ban className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
+                  <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border-0 text-[9px] sm:text-[10px] lg:text-xs">
+                    <Ban className="h-2 w-2 sm:h-2.5 sm:w-2.5 lg:h-3 lg:w-3 mr-1" />
                     Día Bloqueado
                   </Badge>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="pt-4 sm:pt-6">
+            <CardContent className="pt-2 sm:pt-4 lg:pt-6">
               {renderTimeline()}
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Modal de Detalles */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+        <DialogContent className="sm:max-w-2xl border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+          <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-4">
+            <DialogTitle className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+              Detalles del Turno
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
+              Información completa del turno y acciones disponibles
+            </DialogDescription>
+          </DialogHeader>
+
           {selectedTurno && (
-            <div className="space-y-6">
-              <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <DialogTitle className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
-                      Detalles del Turno
-                    </DialogTitle>
-                    <DialogDescription className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                      {selectedTurno.turno.fecha} a las{" "}
-                      {selectedTurno.turno.hora}
-                    </DialogDescription>
-                  </div>
+            <div className="space-y-6 py-4">
+              {/* Estado Badge */}
+              <div className="flex items-center justify-center">
+                <div className="scale-125">
                   {getEstadoBadge(selectedTurno.estado)}
                 </div>
-              </DialogHeader>
+              </div>
 
               {/* Grid de Información */}
-              <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
                 {/* Cliente */}
-                <div className="space-y-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800">
+                <div className="space-y-3 p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800">
                   <div className="flex items-center gap-2 mb-3">
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
-                    <h3 className="text-sm sm:text-base font-bold text-indigo-900 dark:text-indigo-100">
+                    <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    <h3 className="font-bold text-indigo-900 dark:text-indigo-100">
                       Información del Cliente
                     </h3>
                   </div>
@@ -890,9 +1121,9 @@ export default function TurnosManagement() {
                         {selectedTurno.cliente.email}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-1 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" /> Dirección
+                    <div className="p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 border-2 border-indigo-300 dark:border-indigo-700">
+                      <p className="text-xs font-bold text-indigo-800 dark:text-indigo-200 mb-1 flex items-center gap-1">
+                        <MapPin className="h-4 w-4" /> Dirección de Atención
                       </p>
                       <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
                         {selectedTurno.cliente.direccion}
@@ -902,10 +1133,10 @@ export default function TurnosManagement() {
                 </div>
 
                 {/* Mascota */}
-                <div className="space-y-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border border-pink-200 dark:border-pink-800">
+                <div className="space-y-3 p-5 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border border-pink-200 dark:border-pink-800">
                   <div className="flex items-center gap-2 mb-3">
-                    <PawPrint className="h-4 w-4 sm:h-5 sm:w-5 text-pink-600 dark:text-pink-400" />
-                    <h3 className="text-sm sm:text-base font-bold text-pink-900 dark:text-pink-100">
+                    <PawPrint className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                    <h3 className="font-bold text-pink-900 dark:text-pink-100">
                       Información de la Mascota
                     </h3>
                   </div>
@@ -958,11 +1189,10 @@ export default function TurnosManagement() {
                 </div>
               </div>
 
-              {/* Turno Info */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
                 <div className="flex items-center gap-2 mb-3">
-                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="text-sm sm:text-base font-bold text-emerald-900 dark:text-emerald-100">
+                  <CalendarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  <h3 className="font-bold text-emerald-900 dark:text-emerald-100">
                     Información del Turno
                   </h3>
                 </div>
@@ -972,7 +1202,13 @@ export default function TurnosManagement() {
                       Fecha
                     </p>
                     <p className="text-sm font-bold text-emerald-900 dark:text-emerald-100">
-                      {selectedTurno.turno.fecha}
+                      {new Date(
+                        selectedTurno.turno.fecha + "T00:00:00"
+                      ).toLocaleDateString("es-AR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
                     </p>
                   </div>
                   <div>
@@ -985,25 +1221,36 @@ export default function TurnosManagement() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1">
-                      ID
+                      Estado
                     </p>
-                    <p className="text-sm font-bold text-emerald-900 dark:text-emerald-100 truncate">
-                      {selectedTurno.id}
-                    </p>
+                    <div className="mt-1">
+                      {getEstadoBadge(selectedTurno.estado)}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-3">
                   <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1 flex items-center gap-1">
-                    <FileText className="h-3 w-3" /> Motivo de Consulta
+                    <FileText className="h-3 w-3" /> Tipo de Turno / Motivo de
+                    Consulta
                   </p>
                   <p className="text-sm font-bold text-emerald-900 dark:text-emerald-100">
-                    {selectedTurno.turno.motivo}
+                    {selectedTurno.turno.motivo || "No especificado"}
                   </p>
                 </div>
+                {selectedTurno.turno.observaciones && (
+                  <div className="mt-3 p-3 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700">
+                    <p className="text-xs font-bold text-emerald-800 dark:text-emerald-200 mb-1 flex items-center gap-1">
+                      <FileText className="h-3 w-3" /> Observaciones del Cliente
+                    </p>
+                    <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
+                      {selectedTurno.turno.observaciones}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Acciones */}
-              <div className="flex flex-wrap gap-2 sm:gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 {selectedTurno.estado === "pendiente" && (
                   <>
                     <Button
@@ -1011,9 +1258,9 @@ export default function TurnosManagement() {
                         selectedTurno.id &&
                         handleMarkCompleted(selectedTurno.id)
                       }
-                      className="flex-1 text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg"
+                      className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg"
                     >
-                      <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
                       Marcar Completado
                     </Button>
                     <Button
@@ -1021,9 +1268,9 @@ export default function TurnosManagement() {
                         selectedTurno.id && handleCancel(selectedTurno.id)
                       }
                       variant="outline"
-                      className="flex-1 text-xs sm:text-sm border-2 border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30 font-semibold"
+                      className="flex-1 border-2 border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30 font-semibold"
                     >
-                      <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <XCircle className="h-4 w-4 mr-2" />
                       Cancelar Turno
                     </Button>
                   </>
@@ -1031,9 +1278,9 @@ export default function TurnosManagement() {
                 <Button
                   onClick={() => handleEdit(selectedTurno)}
                   variant="outline"
-                  className="flex-1 text-xs sm:text-sm border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-950/30 font-semibold"
+                  className="flex-1 border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-950/30 font-semibold"
                 >
-                  <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <Edit className="h-4 w-4 mr-2" />
                   Editar
                 </Button>
                 <Button
@@ -1041,9 +1288,9 @@ export default function TurnosManagement() {
                     selectedTurno.id && handleDelete(selectedTurno.id)
                   }
                   variant="outline"
-                  className="flex-1 text-xs sm:text-sm border-2 border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-950/30 font-semibold"
+                  className="flex-1 border-2 border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-950/30 font-semibold"
                 >
-                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Eliminar
                 </Button>
               </div>
@@ -1110,6 +1357,180 @@ export default function TurnosManagement() {
             <Button
               onClick={handleSaveEdit}
               className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg"
+            >
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={blockDateDialogOpen} onOpenChange={setBlockDateDialogOpen}>
+        <DialogContent className="sm:max-w-md border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+          <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-4">
+            <DialogTitle className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+              Gestionar Disponibilidad
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
+              Bloquea o habilita fechas individuales o rangos
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Single Date */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                Fecha Individual
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  value={selectedDateForBlock}
+                  onChange={(e) => setSelectedDateForBlock(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => handleToggleBlockDate(selectedDateForBlock)}
+                  variant={
+                    blockedDates.includes(selectedDateForBlock)
+                      ? "default"
+                      : "outline"
+                  }
+                  className={
+                    blockedDates.includes(selectedDateForBlock)
+                      ? "bg-emerald-600 hover:bg-emerald-600"
+                      : "border-rose-300 text-rose-700 hover:bg-rose-50"
+                  }
+                >
+                  {blockedDates.includes(selectedDateForBlock) ? (
+                    <>
+                      <Unlock className="h-4 w-4 mr-2" />
+                      Habilitar
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      Bloquear
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4" />
+
+            {/* Date Range */}
+            <div className="space-y-3">
+              <Label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                Rango de Fechas
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-slate-600 dark:text-slate-400">
+                    Desde
+                  </Label>
+                  <Input
+                    type="date"
+                    value={dateRangeStart}
+                    onChange={(e) => setDateRangeStart(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600 dark:text-slate-400">
+                    Hasta
+                  </Label>
+                  <Input
+                    type="date"
+                    value={dateRangeEnd}
+                    onChange={(e) => setDateRangeEnd(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleToggleDateRange("block")}
+                  variant="outline"
+                  className="flex-1 border-rose-300 text-rose-700 hover:bg-rose-50"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Bloquear Rango
+                </Button>
+                <Button
+                  onClick={() => handleToggleDateRange("unblock")}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <Unlock className="h-4 w-4 mr-2" />
+                  Habilitar Rango
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-md border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+          <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-4">
+            <DialogTitle className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+              Configurar Horarios
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
+              Ajusta el horario de atención
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                Hora de Inicio
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                max="23"
+                value={tempSchedule.startHour}
+                onChange={(e) =>
+                  setTempSchedule((prev) => ({
+                    ...prev,
+                    startHour: Number.parseInt(e.target.value) || 8,
+                  }))
+                }
+                className="text-center text-lg font-bold"
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-500">
+                Horario: {String(tempSchedule.startHour).padStart(2, "0")}:00
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                Hora de Fin
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                max="23"
+                value={tempSchedule.endHour}
+                onChange={(e) =>
+                  setTempSchedule((prev) => ({
+                    ...prev,
+                    endHour: Number.parseInt(e.target.value) || 20,
+                  }))
+                }
+                className="text-center text-lg font-bold"
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-500">
+                Horario: {String(tempSchedule.endHour).padStart(2, "0")}:00
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button
+              variant="outline"
+              onClick={() => setScheduleDialogOpen(false)}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleUpdateSchedule}
+              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               Guardar Cambios
             </Button>
