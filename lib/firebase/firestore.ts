@@ -28,6 +28,9 @@ export interface Mascota {
   id?: string
   nombre: string
   tipo: string
+  edad?: string
+  raza?: string
+  peso?: string
 }
 
 export interface Turno {
@@ -78,7 +81,10 @@ export interface HistoriaClinicaRegistro {
 // ============ CLIENTES ============
 export async function createCliente(data: Omit<Cliente, "id">) {
   const clientesRef = collection(db, "clientes")
-  return await addDoc(clientesRef, data)
+  return await addDoc(clientesRef, {
+    ...data,
+    createdAt: new Date().toISOString(),
+  })
 }
 
 export async function getClientes() {
@@ -96,10 +102,34 @@ export async function getClienteByEmail(email: string) {
   return { id: docSnap.id, ...docSnap.data() } as Cliente
 }
 
+/**
+ * 🆕 Actualiza los datos de un cliente existente
+ */
+export async function updateCliente(
+  clienteId: string,
+  data: Partial<Omit<Cliente, "id">>
+) {
+  try {
+    const clienteRef = doc(db, "clientes", clienteId)
+    await updateDoc(clienteRef, {
+      ...data,
+      updatedAt: new Date().toISOString(),
+    })
+    console.log("Cliente actualizado exitosamente:", clienteId)
+    return { success: true, id: clienteId }
+  } catch (error) {
+    console.error("Error actualizando cliente:", error)
+    throw error
+  }
+}
+
 // ============ MASCOTAS ============
 export async function createMascota(clienteId: string, data: Omit<Mascota, "id">) {
   const mascotasRef = collection(db, "clientes", clienteId, "mascotas")
-  const mascotaRef = await addDoc(mascotasRef, data)
+  const mascotaRef = await addDoc(mascotasRef, {
+    ...data,
+    createdAt: new Date().toISOString(),
+  })
   
   // Crear historia clínica automáticamente (documento registro)
   await createHistoriaClinicaRegistro(clienteId, mascotaRef.id)
@@ -115,6 +145,28 @@ export async function getMascotas(clienteId: string) {
 
 // Alias para mantener compatibilidad
 export const getMascotasByClienteId = getMascotas
+
+/**
+ * 🆕 Actualiza los datos de una mascota existente
+ */
+export async function updateMascota(
+  clienteId: string,
+  mascotaId: string,
+  data: Partial<Omit<Mascota, "id">>
+) {
+  try {
+    const mascotaRef = doc(db, "clientes", clienteId, "mascotas", mascotaId)
+    await updateDoc(mascotaRef, {
+      ...data,
+      updatedAt: new Date().toISOString(),
+    })
+    console.log("Mascota actualizada exitosamente:", mascotaId)
+    return { success: true, id: mascotaId }
+  } catch (error) {
+    console.error("Error actualizando mascota:", error)
+    throw error
+  }
+}
 
 // ============ HISTORIA CLÍNICA (DOCUMENTO REGISTRO) ============
 export async function createHistoriaClinicaRegistro(clienteId: string, mascotaId: string) {
