@@ -50,49 +50,83 @@ export function MascotaSection({
         <h3 className="text-xl font-bold">Información de la Mascota</h3>
       </div>
 
-      {/* Selector de mascota existente */}
-      {mascotas.length > 0 && (
-        <div className="space-y-2">
-          <Label htmlFor="mascotaExistente" className="text-sm font-semibold">
-            Selecciona una mascota o registra una nueva
-          </Label>
-          <Select
-            value={formData.mascotaExistenteId || "nueva"}
-            onValueChange={(value) => handleChange("mascotaExistenteId", value)}
+      {/* Selector OBLIGATORIO de mascota */}
+      <div className="space-y-2">
+        <Label htmlFor="mascotaExistente" className="text-sm font-semibold">
+          Elegir Mascota *
+        </Label>
+        <Select
+          value={formData.mascotaExistenteId || ""}
+          onValueChange={(value) => handleChange("mascotaExistenteId", value)}
+          required
+        >
+          <SelectTrigger
+            id="mascotaExistente"
+            className={`h-11 border-2 ${
+              !formData.mascotaExistenteId
+                ? "border-red-300 dark:border-red-800"
+                : ""
+            }`}
           >
-            <SelectTrigger id="mascotaExistente" className="h-11 border-2">
-              <SelectValue placeholder="Selecciona una mascota..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="nueva">
+            <SelectValue placeholder="Selecciona una mascota..." />
+          </SelectTrigger>
+          <SelectContent>
+            {/* Opción de registrar nueva mascota PRIMERO */}
+            <SelectItem value="nueva">
+              <div className="flex items-center gap-2">
+                <PlusCircle className="h-4 w-4 text-primary" />
+                <span className="font-semibold">+ Registrar nueva mascota</span>
+              </div>
+            </SelectItem>
+
+            {/* Separador visual si hay mascotas */}
+            {mascotas.length > 0 && (
+              <div className="border-t border-border/50 my-2" />
+            )}
+
+            {/* Mascotas existentes */}
+            {mascotas.map((mascota) => (
+              <SelectItem key={mascota.id} value={mascota.id}>
                 <div className="flex items-center gap-2">
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Registrar nueva mascota</span>
+                  <Heart className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    {mascota.nombre} - {mascota.tipo}
+                    {mascota.raza && ` (${mascota.raza})`}
+                  </span>
                 </div>
               </SelectItem>
-              {mascotas.map((mascota) => (
-                <SelectItem key={mascota.id} value={mascota.id}>
-                  {mascota.nombre} - {mascota.tipo}{" "}
-                  {mascota.raza && `(${mascota.raza})`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Mensaje de ayuda */}
+        {mascotas.length > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Tienes {mascotas.length} mascota{mascotas.length !== 1 ? "s" : ""}{" "}
+            registrada{mascotas.length !== 1 ? "s" : ""}. Selecciona una o
+            registra una nueva.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No tienes mascotas registradas. Selecciona "+ Registrar nueva
+            mascota"
+          </p>
+        )}
+      </div>
 
       {/* Mensaje si es mascota existente */}
       {esMascotaExistente && (
         <div className="p-4 rounded-lg bg-blue-500/10 border-2 border-blue-500/20 animate-in fade-in duration-300">
           <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-2">
             <Edit3 className="h-4 w-4" />
-            Puedes modificar los datos de tu mascota si lo deseas
+            Puedes modificar los datos de {mascotaSeleccionada?.nombre} si lo
+            deseas
           </p>
         </div>
       )}
 
-      {/* Formulario de mascota (nueva o edición) */}
-      {(mostrarNuevaMascota || esMascotaExistente) && (
+      {/* Formulario de mascota (solo se muestra si seleccionó "nueva" o una existente) */}
+      {formData.mascotaExistenteId && (
         <>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
@@ -121,11 +155,11 @@ export function MascotaSection({
                   <SelectValue placeholder="Selecciona..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="perro">Perro</SelectItem>
-                  <SelectItem value="gato">Gato</SelectItem>
-                  <SelectItem value="conejo">Conejo</SelectItem>
-                  <SelectItem value="ave">Ave</SelectItem>
-                  <SelectItem value="otro">Otro</SelectItem>
+                  <SelectItem value="perro">🐕 Perro</SelectItem>
+                  <SelectItem value="gato">🐈 Gato</SelectItem>
+                  <SelectItem value="conejo">🐰 Conejo</SelectItem>
+                  <SelectItem value="ave">🦜 Ave</SelectItem>
+                  <SelectItem value="otro">🐾 Otro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
