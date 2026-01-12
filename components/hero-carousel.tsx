@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
 import Link from "next/link"
 
 const slides = [
@@ -60,14 +60,27 @@ export function HeroCarousel() {
             <p className="max-w-2xl text-pretty text-base text-white/90 sm:text-lg md:text-xl lg:text-2xl">
               {slide.subtitle}
             </p>
-            <Link href="/turno">
-              <Button size="lg" className="mt-2 text-base md:mt-4 md:text-lg">
-                Sacar Turno Ahora
-              </Button>
-            </Link>
           </div>
         </div>
       ))}
+
+      {/* Botón fijo en la misma posición para todas las slides */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="flex flex-col items-center gap-4 px-4 text-center md:gap-6 mt-56 md:mt-72 lg:mt-80 pointer-events-auto">
+          <Link href="/turno" className="group">
+            <Button 
+              size="lg" 
+              className="text-base md:text-lg bg-green-600 hover:bg-green-700 relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-green-500/50"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                Sacar Turno Ahora
+                <Calendar className="h-5 w-5 transition-all duration-300 group-hover:translate-x-1" />
+              </span>
+              <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            </Button>
+          </Link>
+        </div>
+      </div>
 
       {/* Navigation Buttons */}
       <button
