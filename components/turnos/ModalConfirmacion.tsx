@@ -12,9 +12,6 @@ import {
   Clock,
   User,
   Heart,
-  MapPin,
-  Mail,
-  CreditCard,
   FileText,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -61,156 +58,89 @@ export function ModalConfirmacion({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <CalendarIcon className="h-6 w-6 text-primary" />
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="pb-1 space-y-1">
+          <DialogTitle className="text-lg font-bold flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4 text-primary" />
             Confirmar Turno
           </DialogTitle>
-          <DialogDescription className="text-base">
-            Revisa los datos antes de confirmar tu turno. Recibirás un email de
-            confirmación.
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-3 py-1">
           {/* Información del Cliente */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <User className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">Información del Cliente</h3>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 pb-0.5 border-b">
+              <User className="h-3.5 w-3.5 text-primary" />
+              <h3 className="font-semibold text-xs">Cliente</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Nombre completo</p>
-                <p className="font-medium">{formData.nombre}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <CreditCard className="h-3 w-3" /> DNI
-                </p>
-                <p className="font-medium">{formData.dni}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Teléfono</p>
-                <p className="font-medium">{formData.telefono}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <Mail className="h-3 w-3" /> Email
-                </p>
-                <p className="font-medium">{formData.email}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> Domicilio
-                </p>
-                <p className="font-medium">{formData.domicilio}</p>
-              </div>
+            <div className="text-[11px] space-y-0.5">
+              <p className="font-medium">{formData.nombre}</p>
+              <p className="text-muted-foreground">DNI: <span className="text-foreground font-medium">{formData.dni}</span> • Tel: <span className="text-foreground font-medium">{formData.telefono}</span></p>
             </div>
           </div>
 
           {/* Información de la Mascota */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <Heart className="h-5 w-5 text-primary fill-primary/20" />
-              <h3 className="font-semibold text-lg">
-                Información de la Mascota
-              </h3>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 pb-0.5 border-b">
+              <Heart className="h-3.5 w-3.5 text-primary fill-primary/20" />
+              <h3 className="font-semibold text-xs">Mascota</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Nombre</p>
-                <p className="font-medium">{formData.nombreMascota}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Tipo</p>
-                <p className="font-medium capitalize">{formData.tipoMascota}</p>
-              </div>
-              {formData.razaMascota && (
-                <div>
-                  <p className="text-muted-foreground">Raza</p>
-                  <p className="font-medium">{formData.razaMascota}</p>
-                </div>
-              )}
-              {formData.edadMascota && (
-                <div>
-                  <p className="text-muted-foreground">Edad</p>
-                  <p className="font-medium">{formData.edadMascota}</p>
-                </div>
-              )}
-              {formData.pesoMascota && (
-                <div>
-                  <p className="text-muted-foreground">Peso</p>
-                  <p className="font-medium">{formData.pesoMascota}</p>
-                </div>
+            <div className="text-[11px] space-y-0.5">
+              <p className="font-medium">{formData.nombreMascota} • <span className="capitalize">{formData.tipoMascota}</span></p>
+              {(formData.razaMascota || formData.edadMascota) && (
+                <p className="text-muted-foreground">
+                  {formData.razaMascota && <span>Raza: <span className="text-foreground font-medium">{formData.razaMascota}</span></span>}
+                  {formData.razaMascota && formData.edadMascota && " • "}
+                  {formData.edadMascota && <span>Edad: <span className="text-foreground font-medium">{formData.edadMascota}</span></span>}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Servicio y Motivo */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <FileText className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">Servicio</h3>
+          {/* Servicio */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 pb-0.5 border-b">
+              <FileText className="h-3.5 w-3.5 text-primary" />
+              <h3 className="font-semibold text-xs">Servicio</h3>
             </div>
-            <div className="space-y-2 text-sm">
-              <div>
-                <p className="text-muted-foreground">Servicio requerido</p>
-                <p className="font-medium">
-                  {servicioNombres[formData.servicio]}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Motivo de la consulta</p>
-                <p className="font-medium">{formData.motivo}</p>
-              </div>
+            <div className="text-[11px] space-y-0.5">
+              <p className="font-medium">{servicioNombres[formData.servicio]}</p>
+              <p className="text-muted-foreground line-clamp-1">{formData.motivo}</p>
             </div>
           </div>
 
           {/* Fecha y Hora */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <Clock className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">Fecha y Hora</h3>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 pb-0.5 border-b">
+              <Clock className="h-3.5 w-3.5 text-primary" />
+              <h3 className="font-semibold text-xs">Fecha y Hora</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" /> Fecha
-                </p>
-                <p className="font-medium">
-                  {selectedDate
-                    ? format(selectedDate, "PPP", { locale: es })
-                    : formData.fecha}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Horario
-                </p>
-                <p className="font-medium">{formData.hora} hs</p>
-              </div>
+            <div className="text-[11px]">
+              <p className="font-medium">
+                {selectedDate
+                  ? format(selectedDate, "PPP", { locale: es })
+                  : formData.fecha}
+                {" • "}
+                {formData.hora} hs
+              </p>
             </div>
           </div>
 
           {/* Aviso */}
-          <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">📧 Importante:</strong>{" "}
-              Recibirás un email de confirmación en{" "}
-              <strong>{formData.email}</strong> con todos los detalles de tu
-              turno.
+          <div className="p-2 rounded-lg bg-primary/5 border border-primary/20">
+            <p className="text-[10px] text-muted-foreground">
+              <strong className="text-foreground">📧</strong> Confirmación: <strong className="text-foreground">{formData.email}</strong>
             </p>
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 pt-1">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
             disabled={loading}
+            className="flex-1 sm:flex-none h-9 text-xs"
           >
             Cancelar
           </Button>
@@ -218,15 +148,15 @@ export function ModalConfirmacion({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="bg-gradient-to-r from-primary to-primary/90"
+            className="bg-gradient-to-r from-primary to-primary/90 flex-1 sm:flex-none h-9 text-xs"
           >
             {loading ? (
-              <span className="flex items-center gap-2">
-                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <span className="flex items-center gap-1.5">
+                <div className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 Confirmando...
               </span>
             ) : (
-              "Confirmar Turno"
+              "Confirmar"
             )}
           </Button>
         </DialogFooter>
