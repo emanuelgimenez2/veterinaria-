@@ -1,260 +1,613 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, Cell, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, Area, AreaChart } from "recharts"
-import { getTurnos } from "@/lib/firebase/firestore"
-import type { Turno } from "@/lib/firebase/firestore"
-import { Calendar, TrendingUp, CheckCircle2, Clock, Activity, PawPrint } from "lucide-react"
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  Cell,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  Area,
+  AreaChart,
+  RadialBarChart,
+  RadialBar,
+} from "recharts";
+import { getTurnos } from "@/lib/firebase/firestore";
+import type { Turno } from "@/lib/firebase/firestore";
+import {
+  Calendar,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  Activity,
+  PawPrint,
+  Users,
+  Heart,
+  AlertCircle,
+  DollarSign,
+  CalendarDays,
+  Sparkles,
+} from "lucide-react";
 
 export function DashboardCharts() {
-  const [turnos, setTurnos] = useState<Turno[]>([])
-  const [loading, setLoading] = useState(true)
+  const [turnos, setTurnos] = useState<Turno[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTurnos = async () => {
       try {
-        const data = await getTurnos()
-        setTurnos(data)
+        const data = await getTurnos();
+        setTurnos(data);
       } catch (error) {
-        console.error("Error fetching turnos:", error)
+        console.error("Error fetching turnos:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchTurnos()
-  }, [])
+    fetchTurnos();
+  }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
+      <div className="flex items-center justify-center py-24">
         <div className="relative">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 dark:border-emerald-900 border-t-emerald-600 dark:border-t-emerald-400" />
-          <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full border-4 border-emerald-400 opacity-20" />
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-indigo-500" />
+          <div className="absolute inset-0 h-16 w-16 animate-ping rounded-full border-4 border-indigo-400 opacity-20" />
         </div>
       </div>
-    )
+    );
   }
 
-  // Process data for charts
-  const turnosPorDia = turnos.reduce(
-    (acc, turno) => {
-      const fecha = turno.turno.fecha
-      acc[fecha] = (acc[fecha] || 0) + 1
-      return acc
-    },
-    {} as Record<string, number>,
-  )
+  // Datos procesados
+  const turnosPorDia = turnos.reduce((acc, turno) => {
+    if (turno.turno?.fecha) {
+      const fecha = turno.turno.fecha;
+      acc[fecha] = (acc[fecha] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   const turnosPorDiaData = Object.entries(turnosPorDia)
     .map(([fecha, cantidad]) => ({
-      fecha: new Date(fecha + 'T00:00:00').toLocaleDateString('es-AR', { month: 'short', day: 'numeric' }),
+      fecha: new Date(fecha + "T00:00:00").toLocaleDateString("es-AR", {
+        month: "short",
+        day: "numeric",
+      }),
       cantidad,
+      fullDate: fecha,
     }))
-    .slice(-7)
+    .slice(-30);
 
-  const mascotasPorTipo = turnos.reduce(
-    (acc, turno) => {
-      const tipo = turno.mascota.tipo
-      acc[tipo] = (acc[tipo] || 0) + 1
-      return acc
-    },
-    {} as Record<string, number>,
-  )
+  const mascotasPorTipo = turnos.reduce((acc, turno) => {
+    if (turno.mascota?.tipo) {
+      const tipo = turno.mascota.tipo;
+      acc[tipo] = (acc[tipo] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
-  const mascotasPorTipoData = Object.entries(mascotasPorTipo).map(([tipo, cantidad]) => ({
-    tipo: tipo.charAt(0).toUpperCase() + tipo.slice(1),
-    cantidad,
-  }))
+  const mascotasPorTipoData = Object.entries(mascotasPorTipo).map(
+    ([tipo, cantidad]) => ({
+      tipo: tipo.charAt(0).toUpperCase() + tipo.slice(1),
+      cantidad,
+    })
+  );
 
   const estadosTurnos = {
     pendiente: turnos.filter((t) => t.estado === "pendiente").length,
     completado: turnos.filter((t) => t.estado === "completado").length,
     cancelado: turnos.filter((t) => t.estado === "cancelado").length,
-  }
+  };
+
+  // Nuevas métricas
+  const mascotasUnicas = new Set(
+    turnos.filter((t) => t.mascota?.nombre).map((t) => t.mascota.nombre)
+  ).size;
+  const dueniosUnicos = new Set(
+    turnos.filter((t) => t.cliente?.nombre).map((t) => t.cliente.nombre)
+  ).size;
+
+  // Turnos por mes
+  const turnosPorMes = turnos.reduce((acc, turno) => {
+    if (turno.turno?.fecha) {
+      const mes = new Date(turno.turno.fecha + "T00:00:00").toLocaleDateString(
+        "es-AR",
+        { month: "short" }
+      );
+      acc[mes] = (acc[mes] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const turnosPorMesData = Object.entries(turnosPorMes)
+    .map(([mes, cantidad]) => ({
+      mes: mes.charAt(0).toUpperCase() + mes.slice(1),
+      cantidad,
+    }))
+    .slice(-6);
+
+  // Horarios más populares
+  const turnosPorHorario = turnos.reduce((acc, turno) => {
+    if (turno.turno?.hora) {
+      const hora = turno.turno.hora.split(":")[0] + ":00";
+      acc[hora] = (acc[hora] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const turnosPorHorarioData = Object.entries(turnosPorHorario)
+    .map(([hora, cantidad]) => ({ hora, cantidad }))
+    .sort((a, b) => a.hora.localeCompare(b.hora));
 
   const estadosTurnosData = [
-    { estado: "Pendientes", cantidad: estadosTurnos.pendiente, color: "#f59e0b", gradient: "from-amber-400 to-amber-600" },
-    { estado: "Completados", cantidad: estadosTurnos.completado, color: "#10b981", gradient: "from-emerald-400 to-emerald-600" },
-    { estado: "Cancelados", cantidad: estadosTurnos.cancelado, color: "#ef4444", gradient: "from-red-400 to-red-600" },
-  ]
+    {
+      estado: "Completados",
+      cantidad: estadosTurnos.completado,
+      fill: "#10b981",
+    },
+    {
+      estado: "Pendientes",
+      cantidad: estadosTurnos.pendiente,
+      fill: "#f59e0b",
+    },
+    {
+      estado: "Cancelados",
+      cantidad: estadosTurnos.cancelado,
+      fill: "#6366f1",
+    },
+  ];
 
-  const PIE_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"]
+  // Radial chart data
+  const radialData = [
+    { name: "Completados", value: estadosTurnos.completado, fill: "#10b981" },
+    { name: "Pendientes", value: estadosTurnos.pendiente, fill: "#f59e0b" },
+    { name: "Cancelados", value: estadosTurnos.cancelado, fill: "#6366f1" },
+  ];
 
-  const totalTurnos = turnos.length
-  const tasaCompletado = totalTurnos > 0 ? ((estadosTurnos.completado / totalTurnos) * 100).toFixed(0) : 0
+  const PIE_COLORS = [
+    "#6366f1",
+    "#8b5cf6",
+    "#ec4899",
+    "#f59e0b",
+    "#10b981",
+    "#06b6d4",
+    "#3b82f6",
+  ];
 
-  // Custom tooltip
+  const totalTurnos = turnos.length;
+  const tasaCompletado =
+    totalTurnos > 0
+      ? ((estadosTurnos.completado / totalTurnos) * 100).toFixed(1)
+      : 0;
+  const promedioTurnosDia = (
+    totalTurnos / Object.keys(turnosPorDia).length || 0
+  ).toFixed(1);
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">{label}</p>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-            {payload[0].name}: <span className="font-bold text-emerald-600 dark:text-emerald-400">{payload[0].value}</span>
+        <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-200 dark:border-slate-600 rounded-2xl shadow-2xl p-4">
+          <p className="text-sm font-bold text-slate-900 dark:text-white mb-1">
+            {label}
           </p>
+          {payload.map((entry: any, index: number) => (
+            <p
+              key={index}
+              className="text-xs text-slate-600 dark:text-slate-300"
+            >
+              {entry.name}:{" "}
+              <span className="font-bold" style={{ color: entry.color }}>
+                {entry.value}
+              </span>
+            </p>
+          ))}
         </div>
-      )
+      );
     }
-    return null
-  }
+    return null;
+  };
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      {/* Stats Cards - Mejorados */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        {/* Total Turnos */}
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-500/20 dark:via-indigo-500/20 dark:to-purple-500/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">Total Turnos</CardTitle>
-            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/50">
-              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" strokeWidth={2.5} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 sm:p-6 lg:p-8">
+      {/* Header con glassmorphism */}
+      <div className="mb-8 relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl" />
+        <div className="relative backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/20 dark:border-slate-700/50 rounded-3xl p-6 sm:p-8 shadow-2xl">
+          <div className="flex items-center gap-4">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl shadow-indigo-500/50">
+              <Sparkles className="h-8 w-8 text-white" strokeWidth={2} />
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-              {turnos.length}
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
+                Dashboard Veterinario
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
+                Panel de análisis y métricas en tiempo real
+              </p>
             </div>
-            <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-semibold mt-1">registrados</p>
-          </CardContent>
-        </Card>
-
-        {/* Pendientes */}
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-yellow-500/10 dark:from-amber-500/20 dark:via-orange-500/20 dark:to-yellow-500/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">Pendientes</CardTitle>
-            <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/50">
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" strokeWidth={2.5} />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
-              {estadosTurnos.pendiente}
-            </div>
-            <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-semibold mt-1">por atender</p>
-          </CardContent>
-        </Card>
-
-        {/* Completados */}
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-green-500/10 dark:from-emerald-500/20 dark:via-teal-500/20 dark:to-green-500/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">Completados</CardTitle>
-            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/50">
-              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" strokeWidth={2.5} />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
-              {estadosTurnos.completado}
-            </div>
-            <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-semibold mt-1">atendidos</p>
-          </CardContent>
-        </Card>
-
-        {/* Tasa Éxito */}
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 dark:from-violet-500/20 dark:via-purple-500/20 dark:to-fuchsia-500/20 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">Tasa Éxito</CardTitle>
-            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-500/50">
-              <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" strokeWidth={2.5} />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-              {tasaCompletado}%
-            </div>
-            <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 font-semibold mt-1">completados</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid gap-4 sm:gap-5 lg:gap-6 lg:grid-cols-2">
-        {/* Turnos por día - Area Chart */}
-        <Card className="border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-300">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30">
-                <Activity className="h-4 w-4 text-white" strokeWidth={2.5} />
+      {/* KPI Cards Premium */}
+      <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 mb-8">
+        {/* Total Turnos */}
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white/90 to-white/70 dark:from-slate-900/90 dark:to-slate-900/70 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg">
+                <Calendar className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
-              <div>
-                <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Turnos por Día</CardTitle>
-                <CardDescription className="text-xs text-slate-600 dark:text-slate-400">Últimos 7 días con actividad</CardDescription>
+              <div className="px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+                <TrendingUp className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={turnosPorDiaData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
+              {totalTurnos}
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              Total Turnos
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
+              Todos los registros
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Pendientes */}
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white/90 to-white/70 dark:from-slate-900/90 dark:to-slate-900/70 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
+                <Clock className="h-5 w-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
+              {estadosTurnos.pendiente}
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              Pendientes
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
+              Por atender
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Completados */}
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white/90 to-white/70 dark:from-slate-900/90 dark:to-slate-900/70 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg">
+                <CheckCircle2
+                  className="h-5 w-5 text-white"
+                  strokeWidth={2.5}
+                />
+              </div>
+              <div className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50">
+                <Heart className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
+              {estadosTurnos.completado}
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              Completados
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
+              Exitosamente
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Tasa de Éxito */}
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white/90 to-white/70 dark:from-slate-900/90 dark:to-slate-900/70 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 shadow-lg">
+                <TrendingUp className="h-5 w-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-900/50">
+                <Sparkles className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
+              {tasaCompletado}%
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              Tasa de Éxito
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
+              Completados
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Mascotas Únicas */}
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white/90 to-white/70 dark:from-slate-900/90 dark:to-slate-900/70 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-lg">
+                <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="px-2.5 py-1 rounded-full bg-pink-100 dark:bg-pink-900/50">
+                <Heart className="h-3.5 w-3.5 text-pink-600 dark:text-pink-400" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
+              {mascotasUnicas}
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              Mascotas
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
+              Únicas registradas
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Clientes Únicos */}
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white/90 to-white/70 dark:from-slate-900/90 dark:to-slate-900/70 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                <Users className="h-5 w-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/50">
+                <Activity className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
+              {dueniosUnicos}
+            </div>
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              Clientes
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
+              Activos totales
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Grid Principal */}
+      <div className="grid gap-6 lg:grid-cols-12 mb-6">
+        {/* Turnos por Día - Línea suave */}
+        <Card className="lg:col-span-8 border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                  <Activity className="h-5 w-5 text-white" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                    Evolución de Turnos
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
+                    Últimos 30 días con actividad
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold">
+                {promedioTurnosDia} turnos/día
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart
+                data={turnosPorDiaData}
+                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+              >
                 <defs>
-                  <linearGradient id="colorCantidad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  <linearGradient
+                    id="colorCantidad"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis 
-                  dataKey="fecha" 
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  strokeOpacity={0.3}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="fecha"
                   tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
-                  axisLine={{ stroke: "#cbd5e1" }}
+                  axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
                   tickLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
-                  axisLine={{ stroke: "#cbd5e1" }}
+                  axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
                   tickLine={false}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Area 
-                  type="monotone" 
-                  dataKey="cantidad" 
-                  stroke="#10b981"
+                <Area
+                  type="monotone"
+                  dataKey="cantidad"
+                  stroke="#6366f1"
                   strokeWidth={3}
                   fill="url(#colorCantidad)"
-                  dot={{ fill: "#10b981", strokeWidth: 2, r: 4, stroke: "#fff" }}
-                  activeDot={{ r: 6, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
+                  dot={{
+                    fill: "#6366f1",
+                    strokeWidth: 2,
+                    r: 4,
+                    stroke: "#fff",
+                  }}
+                  activeDot={{
+                    r: 7,
+                    fill: "#6366f1",
+                    stroke: "#fff",
+                    strokeWidth: 3,
+                    filter: "drop-shadow(0 2px 4px rgba(99, 102, 241, 0.4))",
+                  }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Tipos de mascotas - Mejorado */}
-        <Card className="border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-300">
+        {/* Estado de Turnos - Radial */}
+        <Card className="lg:col-span-4 border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500">
           <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30">
-                <PawPrint className="h-4 w-4 text-white" strokeWidth={2.5} />
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+                <CheckCircle2
+                  className="h-5 w-5 text-white"
+                  strokeWidth={2.5}
+                />
               </div>
               <div>
-                <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Tipos de Mascotas</CardTitle>
-                <CardDescription className="text-xs text-slate-600 dark:text-slate-400">Distribución por especie</CardDescription>
+                <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                  Estados
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
+                  Distribución actual
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center">
+            <ResponsiveContainer width="100%" height={240}>
+              <RadialBarChart
+                cx="50%"
+                cy="50%"
+                innerRadius="30%"
+                outerRadius="100%"
+                data={radialData}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <RadialBar
+                  minAngle={15}
+                  background={{ fill: "#f1f5f9" }}
+                  clockWise
+                  dataKey="value"
+                  cornerRadius={10}
+                />
+                <Tooltip content={<CustomTooltip />} />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-3 gap-3 mt-4 w-full">
+              <div className="text-center p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+                <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                  {estadosTurnos.completado}
+                </div>
+                <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                  Completados
+                </div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                <div className="text-xl font-black text-amber-600 dark:text-amber-400">
+                  {estadosTurnos.pendiente}
+                </div>
+                <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                  Pendientes
+                </div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+                <div className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                  {estadosTurnos.cancelado}
+                </div>
+                <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                  Cancelados
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Segunda fila de gráficos */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Tipos de Mascotas - Donut mejorado */}
+        <Card className="lg:col-span-4 border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 shadow-lg">
+                <PawPrint className="h-5 w-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                  Tipos de Mascotas
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
+                  Por especie
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie 
-                  data={mascotasPorTipoData} 
-                  dataKey="cantidad" 
-                  nameKey="tipo" 
-                  cx="50%" 
-                  cy="50%" 
-                  outerRadius={90}
-                  innerRadius={50}
-                  paddingAngle={2}
-                  label={({ tipo, percent }) => `${tipo} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={{ stroke: "#94a3b8", strokeWidth: 1 }}
-                  style={{ fontSize: "11px", fontWeight: 700 }}
+                <Pie
+                  data={mascotasPorTipoData}
+                  dataKey="cantidad"
+                  nameKey="tipo"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  innerRadius={60}
+                  paddingAngle={3}
+                  label={({ tipo, percent }) =>
+                    `${tipo} ${(percent * 100).toFixed(0)}%`
+                  }
+                  labelLine={{ stroke: "#94a3b8", strokeWidth: 2 }}
+                  style={{ fontSize: "12px", fontWeight: 700 }}
                 >
                   {mascotasPorTipoData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      style={{
+                        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))",
+                      }}
+                    />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
@@ -263,53 +616,139 @@ export function DashboardCharts() {
           </CardContent>
         </Card>
 
-        {/* Estado de turnos - Bar Chart mejorado */}
-        <Card className="lg:col-span-2 border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-300">
+        {/* Turnos por Mes - Barras */}
+        <Card className="lg:col-span-4 border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500">
           <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30">
-                <CheckCircle2 className="h-4 w-4 text-white" strokeWidth={2.5} />
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg">
+                <CalendarDays
+                  className="h-5 w-5 text-white"
+                  strokeWidth={2.5}
+                />
               </div>
               <div>
-                <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Estado de Turnos</CardTitle>
-                <CardDescription className="text-xs text-slate-600 dark:text-slate-400">Resumen por estado actual</CardDescription>
+                <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                  Por Mes
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
+                  Últimos 6 meses
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={estadosTurnosData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={turnosPorMesData}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+              >
                 <defs>
-                  {estadosTurnosData.map((entry, index) => (
-                    <linearGradient key={index} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={entry.color} stopOpacity={0.9}/>
-                      <stop offset="100%" stopColor={entry.color} stopOpacity={0.6}/>
-                    </linearGradient>
-                  ))}
+                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.6} />
+                  </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis 
-                  dataKey="estado" 
-                  tick={{ fontSize: 12, fill: "#64748b", fontWeight: 700 }}
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  strokeOpacity={0.3}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="mes"
+                  tick={{ fontSize: 11, fill: "#64748b", fontWeight: 700 }}
                   axisLine={{ stroke: "#cbd5e1" }}
                   tickLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
                   axisLine={{ stroke: "#cbd5e1" }}
                   tickLine={false}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="cantidad" radius={[8, 8, 0, 0]} barSize={60}>
-                  {estadosTurnosData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={`url(#gradient-${index})`} />
-                  ))}
-                </Bar>
+                <Bar
+                  dataKey="cantidad"
+                  fill="url(#barGradient)"
+                  radius={[10, 10, 0, 0]}
+                  barSize={40}
+                />
               </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Horarios Populares */}
+        <Card className="lg:col-span-4 border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl hover:shadow-3xl transition-all duration-500">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg">
+                <Clock className="h-5 w-5 text-white" strokeWidth={2.5} />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
+                  Horarios Populares
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
+                  Distribución horaria
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart
+                data={turnosPorHorarioData}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  strokeOpacity={0.3}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="hora"
+                  tick={{ fontSize: 10, fill: "#64748b", fontWeight: 600 }}
+                  axisLine={{ stroke: "#cbd5e1" }}
+                  tickLine={false}
+                  interval={1}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
+                  axisLine={{ stroke: "#cbd5e1" }}
+                  tickLine={false}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="cantidad"
+                  stroke="#06b6d4"
+                  strokeWidth={3}
+                  fill="url(#lineGradient)"
+                  dot={{
+                    fill: "#06b6d4",
+                    strokeWidth: 2,
+                    r: 4,
+                    stroke: "#fff",
+                  }}
+                  activeDot={{
+                    r: 6,
+                    fill: "#06b6d4",
+                    stroke: "#fff",
+                    strokeWidth: 2,
+                  }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
