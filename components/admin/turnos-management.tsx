@@ -1,11 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -13,18 +19,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { getTurnos, updateTurno, deleteTurno } from "@/lib/firebase/firestore"
-import type { Turno } from "@/lib/firebase/firestore"
-import { useToast } from "@/hooks/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { 
-  CheckCircle2, 
-  XCircle, 
-  Edit, 
-  Trash2, 
-  Calendar as CalendarIcon, 
-  ChevronLeft, 
+} from "@/components/ui/dialog";
+import { getTurnos, updateTurno, deleteTurno } from "@/lib/firebase/firestore";
+import type { Turno } from "@/lib/firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import {
+  CheckCircle2,
+  XCircle,
+  Edit,
+  Trash2,
+  CalendarIcon,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Users,
@@ -36,11 +42,10 @@ import {
   Mail,
   FileText,
   Sparkles,
-  TrendingUp,
-  Activity
-} from "lucide-react"
-import { doc, getDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase/config"
+  Activity,
+} from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
 
 export default function TurnosManagement() {
   const [turnos, setTurnos] = useState<Turno[]>([]);
@@ -300,10 +305,9 @@ export default function TurnosManagement() {
         <button
           key={day}
           onClick={() => setSelectedDate(dateStr)}
-          disabled={isBlocked}
           className={`aspect-square p-1 border rounded-xl flex flex-col items-center justify-center relative group transition-all duration-300 ${
             isBlocked
-              ? "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-50"
+              ? "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 cursor-pointer opacity-70 hover:opacity-90"
               : isSelected
               ? "bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-400 shadow-lg shadow-indigo-500/50 scale-105"
               : isToday
@@ -354,7 +358,7 @@ export default function TurnosManagement() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 w-9 p-0 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="h-9 w-9 p-0 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 bg-transparent"
               onClick={() =>
                 setCurrentMonth(
                   new Date(
@@ -369,7 +373,7 @@ export default function TurnosManagement() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 w-9 p-0 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="h-9 w-9 p-0 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 bg-transparent"
               onClick={() =>
                 setCurrentMonth(
                   new Date(
@@ -433,7 +437,7 @@ export default function TurnosManagement() {
             const hourTurnos = selectedDateTurnos.filter((t) =>
               t.turno.hora.startsWith(slot.split(":")[0])
             );
-            const hour = parseInt(slot.split(":")[0]);
+            const hour = Number.parseInt(slot.split(":")[0]);
             const isPast = isToday && hour < currentHour;
             const isCurrentHour = isToday && hour === currentHour;
 
@@ -608,18 +612,21 @@ export default function TurnosManagement() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8 relative">
+      <div className="mb-6 sm:mb-8 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl" />
-        <div className="relative backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/20 dark:border-slate-700/50 rounded-3xl p-6 sm:p-8 shadow-2xl">
-          <div className="flex items-center gap-4">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl shadow-indigo-500/50">
-              <CalendarIcon className="h-8 w-8 text-white" strokeWidth={2} />
+        <div className="relative backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/20 dark:border-slate-700/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl shadow-indigo-500/50">
+              <CalendarIcon
+                className="h-6 w-6 sm:h-8 sm:w-8 text-white"
+                strokeWidth={2}
+              />
             </div>
-            <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 truncate">
                 Gestión de Turnos
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base font-medium">
+              <p className="text-slate-600 dark:text-slate-400 mt-1 text-xs sm:text-sm lg:text-base font-medium truncate">
                 {new Date(selectedDate + "T00:00:00").toLocaleDateString(
                   "es-AR",
                   {
@@ -675,7 +682,10 @@ export default function TurnosManagement() {
                   <CardDescription className="text-xs text-slate-600 dark:text-slate-400">
                     {new Date(selectedDate + "T00:00:00").toLocaleDateString(
                       "es-AR",
-                      { day: "numeric", month: "short" }
+                      {
+                        day: "numeric",
+                        month: "short",
+                      }
                     )}
                   </CardDescription>
                 </div>
@@ -827,32 +837,31 @@ export default function TurnosManagement() {
 
       {/* Modal de Detalles */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
-          <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-4">
-            <DialogTitle className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
-              Detalles del Turno
-            </DialogTitle>
-            <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
-              Información completa del turno y acciones disponibles
-            </DialogDescription>
-          </DialogHeader>
-
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
           {selectedTurno && (
-            <div className="space-y-6 py-4">
-              {/* Estado Badge */}
-              <div className="flex items-center justify-center">
-                <div className="scale-125">
+            <div className="space-y-6">
+              <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <DialogTitle className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                      Detalles del Turno
+                    </DialogTitle>
+                    <DialogDescription className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      {selectedTurno.turno.fecha} a las{" "}
+                      {selectedTurno.turno.hora}
+                    </DialogDescription>
+                  </div>
                   {getEstadoBadge(selectedTurno.estado)}
                 </div>
-              </div>
+              </DialogHeader>
 
               {/* Grid de Información */}
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
                 {/* Cliente */}
-                <div className="space-y-3 p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800">
+                <div className="space-y-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800">
                   <div className="flex items-center gap-2 mb-3">
-                    <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    <h3 className="font-bold text-indigo-900 dark:text-indigo-100">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+                    <h3 className="text-sm sm:text-base font-bold text-indigo-900 dark:text-indigo-100">
                       Información del Cliente
                     </h3>
                   </div>
@@ -893,10 +902,10 @@ export default function TurnosManagement() {
                 </div>
 
                 {/* Mascota */}
-                <div className="space-y-3 p-5 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border border-pink-200 dark:border-pink-800">
+                <div className="space-y-3 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border border-pink-200 dark:border-pink-800">
                   <div className="flex items-center gap-2 mb-3">
-                    <PawPrint className="h-5 w-5 text-pink-600 dark:text-pink-400" />
-                    <h3 className="font-bold text-pink-900 dark:text-pink-100">
+                    <PawPrint className="h-4 w-4 sm:h-5 sm:w-5 text-pink-600 dark:text-pink-400" />
+                    <h3 className="text-sm sm:text-base font-bold text-pink-900 dark:text-pink-100">
                       Información de la Mascota
                     </h3>
                   </div>
@@ -950,10 +959,10 @@ export default function TurnosManagement() {
               </div>
 
               {/* Turno Info */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
                 <div className="flex items-center gap-2 mb-3">
-                  <CalendarIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="font-bold text-emerald-900 dark:text-emerald-100">
+                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
+                  <h3 className="text-sm sm:text-base font-bold text-emerald-900 dark:text-emerald-100">
                     Información del Turno
                   </h3>
                 </div>
@@ -994,7 +1003,7 @@ export default function TurnosManagement() {
               </div>
 
               {/* Acciones */}
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex flex-wrap gap-2 sm:gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 {selectedTurno.estado === "pendiente" && (
                   <>
                     <Button
@@ -1002,9 +1011,9 @@ export default function TurnosManagement() {
                         selectedTurno.id &&
                         handleMarkCompleted(selectedTurno.id)
                       }
-                      className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg"
+                      className="flex-1 text-xs sm:text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg"
                     >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Marcar Completado
                     </Button>
                     <Button
@@ -1012,9 +1021,9 @@ export default function TurnosManagement() {
                         selectedTurno.id && handleCancel(selectedTurno.id)
                       }
                       variant="outline"
-                      className="flex-1 border-2 border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30 font-semibold"
+                      className="flex-1 text-xs sm:text-sm border-2 border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30 font-semibold"
                     >
-                      <XCircle className="h-4 w-4 mr-2" />
+                      <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Cancelar Turno
                     </Button>
                   </>
@@ -1022,9 +1031,9 @@ export default function TurnosManagement() {
                 <Button
                   onClick={() => handleEdit(selectedTurno)}
                   variant="outline"
-                  className="flex-1 border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-950/30 font-semibold"
+                  className="flex-1 text-xs sm:text-sm border-2 border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-950/30 font-semibold"
                 >
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Editar
                 </Button>
                 <Button
@@ -1032,9 +1041,9 @@ export default function TurnosManagement() {
                     selectedTurno.id && handleDelete(selectedTurno.id)
                   }
                   variant="outline"
-                  className="flex-1 border-2 border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-950/30 font-semibold"
+                  className="flex-1 text-xs sm:text-sm border-2 border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-950/30 font-semibold"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Eliminar
                 </Button>
               </div>
