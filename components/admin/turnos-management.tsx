@@ -73,6 +73,7 @@ export default function TurnosManagement() {
   const [selectedDateForBlock, setSelectedDateForBlock] = useState<string>("");
   const [dateRangeStart, setDateRangeStart] = useState<string>("");
   const [dateRangeEnd, setDateRangeEnd] = useState<string>("");
+  const [singleDateBlock, setSingleDateBlock] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -135,14 +136,12 @@ export default function TurnosManagement() {
       let newBlockedDates: string[];
 
       if (isCurrentlyBlocked) {
-        // Unblock the date
         newBlockedDates = blockedDates.filter((d) => d !== dateStr);
         toast({
           title: "Fecha habilitada",
           description: `La fecha ${dateStr} ha sido habilitada`,
         });
       } else {
-        // Block the date
         newBlockedDates = [...blockedDates, dateStr];
         toast({
           title: "Fecha bloqueada",
@@ -159,6 +158,49 @@ export default function TurnosManagement() {
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado de la fecha",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleSingleDate = async (action: "block" | "unblock") => {
+    if (!singleDateBlock) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar una fecha",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      let newBlockedDates: string[];
+
+      if (action === "block") {
+        newBlockedDates = [...new Set([...blockedDates, singleDateBlock])];
+        toast({
+          title: "Fecha bloqueada",
+          description: `Se bloqueó la fecha ${singleDateBlock}`,
+        });
+      } else {
+        newBlockedDates = blockedDates.filter((d) => d !== singleDateBlock);
+        toast({
+          title: "Fecha habilitada",
+          description: `Se habilitó la fecha ${singleDateBlock}`,
+        });
+      }
+
+      await setDoc(doc(db, "settings", "blockedDates"), {
+        dates: newBlockedDates,
+      });
+      setBlockedDates(newBlockedDates);
+      setBlockDateDialogOpen(false);
+      setSingleDateBlock("");
+    } catch (error) {
+      console.error("Error toggling single date:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la fecha",
         variant: "destructive",
       });
     }
@@ -199,14 +241,12 @@ export default function TurnosManagement() {
       let newBlockedDates: string[];
 
       if (action === "block") {
-        // Add dates to blocked list
         newBlockedDates = [...new Set([...blockedDates, ...datesToModify])];
         toast({
           title: "Rango bloqueado",
           description: `Se bloquearon ${datesToModify.length} fechas`,
         });
       } else {
-        // Remove dates from blocked list
         newBlockedDates = blockedDates.filter(
           (d) => !datesToModify.includes(d)
         );
@@ -242,23 +282,8 @@ export default function TurnosManagement() {
       });
       await fetchTurnos();
       setDetailsDialogOpen(false);
-
-      // Buscar el siguiente turno pendiente
-      const selectedDateTurnos = getTurnosForDate(selectedDate);
-      const proximoTurno = selectedDateTurnos
-        .filter((t) => t.estado === "pendiente")
-        .sort((a, b) => a.turno.hora.localeCompare(b.turno.hora))[0];
-
-      if (proximoTurno) {
-        // Auto-abrir el siguiente turno después de un breve delay
-        setTimeout(() => {
-          setSelectedTurno(proximoTurno);
-          if (proximoTurno.mascotaId && proximoTurno.clienteId) {
-            fetchMascotaDetails(proximoTurno.clienteId, proximoTurno.mascotaId);
-          }
-          setDetailsDialogOpen(true);
-        }, 500);
-      }
+      setSelectedTurno(null);
+      setMascotaDetails(null);
     } catch (error) {
       console.error("Error updating turno:", error);
       toast({
@@ -408,7 +433,7 @@ export default function TurnosManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div className="relative">
           <div className="h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 animate-spin rounded-full border-2 sm:border-4 border-slate-200 dark:border-slate-700 border-t-indigo-500" />
           <div className="absolute inset-0 h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 animate-ping rounded-full border-2 sm:border-4 border-indigo-400 opacity-20" />
@@ -418,19 +443,19 @@ export default function TurnosManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-2 sm:p-3 lg:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-2 sm:p-3 lg:p-6">
       <div className="mb-2 sm:mb-4 lg:mb-6 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-3xl" />
-        <div className="relative backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/20 dark:border-slate-700/50 rounded-lg sm:rounded-xl lg:rounded-2xl p-2 sm:p-3 lg:p-6 shadow-2xl">
+        <div className="absolute inset-0 bg-slate-200/50 dark:bg-slate-800/50 blur-3xl" />
+        <div className="relative backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-xl lg:rounded-2xl p-2 sm:p-3 lg:p-6 shadow-2xl">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 lg:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl shadow-indigo-500/50">
+            <div className="p-1.5 sm:p-2 lg:p-3 rounded-lg sm:rounded-xl bg-slate-700 dark:bg-slate-600 shadow-xl">
               <CalendarIcon
                 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-white"
                 strokeWidth={2}
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-sm sm:text-xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 truncate">
+              <h1 className="text-sm sm:text-xl lg:text-3xl font-black text-slate-900 dark:text-slate-100 truncate">
                 Gestión de Turnos
               </h1>
               <p className="text-slate-600 dark:text-slate-400 mt-0.5 text-[9px] sm:text-[10px] lg:text-sm font-medium truncate">
@@ -455,7 +480,7 @@ export default function TurnosManagement() {
           <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl">
             <CardHeader className="pb-1.5 sm:pb-2 lg:pb-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-slate-700 dark:bg-slate-600 shadow-lg">
                   <CalendarIcon
                     className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
                     strokeWidth={2.5}
@@ -496,7 +521,7 @@ export default function TurnosManagement() {
 
               if (proximoTurno) {
                 return (
-                  <Card className="border-0 bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 shadow-2xl">
+                  <Card className="border-0 bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 shadow-2xl">
                     <CardContent className="p-3 sm:p-4">
                       <div className="flex items-start gap-2 sm:gap-3">
                         <div className="p-2 sm:p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
@@ -534,7 +559,7 @@ export default function TurnosManagement() {
                               }
                               setDetailsDialogOpen(true);
                             }}
-                            className="mt-2 sm:mt-3 w-full bg-white text-rose-600 hover:bg-white/90 font-bold shadow-lg text-xs sm:text-sm h-8 sm:h-9"
+                            className="mt-2 sm:mt-3 w-full bg-white text-slate-800 hover:bg-white/90 font-bold shadow-lg text-xs sm:text-sm h-8 sm:h-9"
                           >
                             Ver Detalles y Aceptar
                             <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1.5" />
@@ -550,7 +575,7 @@ export default function TurnosManagement() {
           <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl">
             <CardHeader className="pb-1.5 sm:pb-2 lg:pb-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
+                <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-slate-700 dark:bg-slate-600 shadow-lg">
                   <Activity
                     className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
                     strokeWidth={2.5}
@@ -579,13 +604,13 @@ export default function TurnosManagement() {
                   <span className="font-semibold text-slate-700 dark:text-slate-300">
                     Ocupación
                   </span>
-                  <span className="font-black text-xs sm:text-sm lg:text-base text-indigo-600 dark:text-indigo-400">
+                  <span className="font-black text-xs sm:text-sm lg:text-base text-slate-900 dark:text-slate-100">
                     {ocupacion}%
                   </span>
                 </div>
                 <div className="h-1.5 sm:h-2 lg:h-2.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500 shadow-lg"
+                    className="h-full rounded-full bg-slate-700 dark:bg-slate-600 transition-all duration-500 shadow-lg"
                     style={{ width: `${ocupacion}%` }}
                   />
                 </div>
@@ -600,7 +625,7 @@ export default function TurnosManagement() {
 
               {/* Pendientes y Completados en grid */}
               <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                <div className="p-1.5 sm:p-2 lg:p-3 rounded-md sm:rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
+                <div className="p-1.5 sm:p-2 lg:p-3 rounded-md sm:rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-1 sm:gap-1.5">
                     <div className="p-0.5 sm:p-1 rounded-sm sm:rounded-md bg-amber-500 shadow-lg">
                       <Clock
@@ -609,17 +634,17 @@ export default function TurnosManagement() {
                       />
                     </div>
                     <div>
-                      <p className="text-[8px] sm:text-[9px] lg:text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                      <p className="text-[8px] sm:text-[9px] lg:text-[10px] font-semibold text-slate-600 dark:text-slate-400">
                         Pendientes
                       </p>
-                      <p className="text-sm sm:text-base lg:text-lg font-black text-amber-900 dark:text-amber-100">
+                      <p className="text-sm sm:text-base lg:text-lg font-black text-slate-900 dark:text-slate-100">
                         {pendientes}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-1.5 sm:p-2 lg:p-3 rounded-md sm:rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
+                <div className="p-1.5 sm:p-2 lg:p-3 rounded-md sm:rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-1 sm:gap-1.5">
                     <div className="p-0.5 sm:p-1 rounded-sm sm:rounded-md bg-emerald-500 shadow-lg">
                       <CheckCircle2
@@ -628,10 +653,10 @@ export default function TurnosManagement() {
                       />
                     </div>
                     <div>
-                      <p className="text-[8px] sm:text-[9px] lg:text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                      <p className="text-[8px] sm:text-[9px] lg:text-[10px] font-semibold text-slate-600 dark:text-slate-400">
                         Completados
                       </p>
-                      <p className="text-sm sm:text-base lg:text-lg font-black text-emerald-900 dark:text-emerald-100">
+                      <p className="text-sm sm:text-base lg:text-lg font-black text-slate-900 dark:text-slate-100">
                         {completados}
                       </p>
                     </div>
@@ -647,7 +672,7 @@ export default function TurnosManagement() {
             <CardHeader className="pb-1.5 sm:pb-2 lg:pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between flex-wrap gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                  <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-slate-700 dark:bg-slate-600 shadow-lg">
                     {viewMode === "timeline" ? (
                       <LayoutList
                         className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
@@ -732,10 +757,11 @@ export default function TurnosManagement() {
         </div>
       </div>
 
+      {/* Modal de Detalles */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
         <DialogContent className="sm:max-w-2xl border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-3 sm:pb-4">
-            <DialogTitle className="text-base sm:text-lg lg:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+            <DialogTitle className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
               Detalles del Turno
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
@@ -755,104 +781,105 @@ export default function TurnosManagement() {
               {/* Grid de Información */}
               <div className="grid gap-3 sm:gap-4 lg:gap-6 sm:grid-cols-2">
                 {/* Cliente */}
-                <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800">
+                <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
-                    <h3 className="font-bold text-xs sm:text-sm lg:text-base text-indigo-900 dark:text-indigo-100">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 dark:text-slate-300" />
+                    <h3 className="font-bold text-xs sm:text-sm lg:text-base text-slate-900 dark:text-slate-100">
                       Información del Cliente
                     </h3>
                   </div>
                   <div className="space-y-1.5 sm:space-y-2">
                     <div>
-                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-0.5 sm:mb-1">
+                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                         Nombre
                       </p>
-                      <p className="text-xs sm:text-sm font-bold text-indigo-900 dark:text-indigo-100">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                         {selectedTurno.cliente.nombre}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-0.5 sm:mb-1 flex items-center gap-1">
+                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1 flex items-center gap-1">
                         <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Teléfono
                       </p>
-                      <p className="text-xs sm:text-sm font-bold text-indigo-900 dark:text-indigo-100">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                         {selectedTurno.cliente.telefono}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-0.5 sm:mb-1 flex items-center gap-1">
+                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1 flex items-center gap-1">
                         <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Email
                       </p>
-                      <p className="text-xs sm:text-sm font-bold text-indigo-900 dark:text-indigo-100 break-all">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 break-all">
                         {selectedTurno.cliente.email}
                       </p>
                     </div>
-                    <div className="p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl bg-indigo-100 dark:bg-indigo-900/40 border-2 border-indigo-300 dark:border-indigo-700">
-                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-bold text-indigo-800 dark:text-indigo-200 mb-1 flex items-center gap-1">
+                    <div className="p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600">
+                      <p className="text-[9px] sm:text-[10px] lg:text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1">
                         <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4" />{" "}
                         Dirección de Atención
                       </p>
-                      <p className="text-xs sm:text-sm font-bold text-indigo-900 dark:text-indigo-100">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                         {selectedTurno.cliente.domicilio || "No especificada"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border border-pink-200 dark:border-pink-800">
+                {/* Mascota */}
+                <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                    <PawPrint className="h-4 w-4 sm:h-5 sm:w-5 text-pink-600 dark:text-pink-400" />
-                    <h3 className="font-bold text-xs sm:text-sm lg:text-base text-pink-900 dark:text-pink-100">
+                    <PawPrint className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 dark:text-slate-300" />
+                    <h3 className="font-bold text-xs sm:text-sm lg:text-base text-slate-900 dark:text-slate-100">
                       Información de la Mascota
                     </h3>
                   </div>
                   {loadingMascota ? (
                     <div className="flex items-center justify-center py-4">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-pink-300 border-t-pink-600" />
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
                     </div>
                   ) : (
                     <div className="space-y-1.5 sm:space-y-2">
                       <div>
-                        <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-pink-700 dark:text-pink-300 mb-0.5 sm:mb-1">
+                        <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                           Nombre
                         </p>
-                        <p className="text-xs sm:text-sm font-bold text-pink-900 dark:text-pink-100">
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                           {selectedTurno.mascota.nombre}
                         </p>
                       </div>
                       <div className="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
-                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-pink-700 dark:text-pink-300 mb-0.5 sm:mb-1">
+                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                             Tipo
                           </p>
-                          <p className="text-xs sm:text-sm font-bold text-pink-900 dark:text-pink-100 capitalize">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 capitalize">
                             {selectedTurno.mascota.tipo}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-pink-700 dark:text-pink-300 mb-0.5 sm:mb-1">
+                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                             Raza
                           </p>
-                          <p className="text-xs sm:text-sm font-bold text-pink-900 dark:text-pink-100">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                             {mascotaDetails?.raza || "No especificada"}
                           </p>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 sm:gap-3">
                         <div>
-                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-pink-700 dark:text-pink-300 mb-0.5 sm:mb-1">
+                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                             Edad
                           </p>
-                          <p className="text-xs sm:text-sm font-bold text-pink-900 dark:text-pink-100">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                             {mascotaDetails?.edad || "No especificada"}{" "}
                             {mascotaDetails?.edad ? "años" : ""}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-pink-700 dark:text-pink-300 mb-0.5 sm:mb-1">
+                          <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                             Peso
                           </p>
-                          <p className="text-xs sm:text-sm font-bold text-pink-900 dark:text-pink-100">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                             {mascotaDetails?.peso || "No especificado"}{" "}
                             {mascotaDetails?.peso ? "kg" : ""}
                           </p>
@@ -863,19 +890,20 @@ export default function TurnosManagement() {
                 </div>
               </div>
 
-              <div className="p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
+              {/* Información del Turno */}
+              <div className="p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="font-bold text-xs sm:text-sm lg:text-base text-emerald-900 dark:text-emerald-100">
+                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 dark:text-slate-300" />
+                  <h3 className="font-bold text-xs sm:text-sm lg:text-base text-slate-900 dark:text-slate-100">
                     Información del Turno
                   </h3>
                 </div>
                 <div className="grid gap-2 sm:gap-3 grid-cols-3">
                   <div>
-                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5 sm:mb-1">
+                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                       Fecha
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-100">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                       {new Date(
                         selectedTurno.turno.fecha + "T00:00:00"
                       ).toLocaleDateString("es-AR", {
@@ -886,15 +914,15 @@ export default function TurnosManagement() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5 sm:mb-1">
+                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                       Hora
                     </p>
-                    <p className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-100">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                       {selectedTurno.turno.hora}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5 sm:mb-1">
+                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
                       Estado
                     </p>
                     <div className="mt-1">
@@ -903,20 +931,20 @@ export default function TurnosManagement() {
                   </div>
                 </div>
                 <div className="mt-2 sm:mt-3">
-                  <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1 flex items-center gap-1">
+                  <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
                     <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Servicio
                     Requerido
                   </p>
-                  <p className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-100">
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                     {selectedTurno.servicio || "No especificado"}
                   </p>
                 </div>
-                <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700">
-                  <p className="text-[9px] sm:text-[10px] lg:text-xs font-bold text-emerald-800 dark:text-emerald-200 mb-1 flex items-center gap-1">
+                <div className="mt-2 sm:mt-3 p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600">
+                  <p className="text-[9px] sm:text-[10px] lg:text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1">
                     <FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Motivo de
                     Consulta
                   </p>
-                  <p className="text-xs sm:text-sm font-medium text-emerald-900 dark:text-emerald-100">
+                  <p className="text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">
                     {selectedTurno.mascota.motivo || "No especificado"}
                   </p>
                 </div>
@@ -931,7 +959,7 @@ export default function TurnosManagement() {
                         selectedTurno.id &&
                         handleMarkCompleted(selectedTurno.id)
                       }
-                      className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg h-8 sm:h-9 lg:h-10 text-[10px] sm:text-xs lg:text-sm"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg h-8 sm:h-9 lg:h-10 text-[10px] sm:text-xs lg:text-sm"
                     >
                       <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Completar
@@ -976,7 +1004,7 @@ export default function TurnosManagement() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-md border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
           <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-3 sm:pb-4">
-            <DialogTitle className="text-base sm:text-lg lg:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+            <DialogTitle className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
               Editar Turno
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
@@ -1029,7 +1057,7 @@ export default function TurnosManagement() {
             </Button>
             <Button
               onClick={handleSaveEdit}
-              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg h-8 sm:h-9 lg:h-10 text-[10px] sm:text-xs lg:text-sm"
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg h-8 sm:h-9 lg:h-10 text-[10px] sm:text-xs lg:text-sm"
             >
               Guardar
             </Button>
@@ -1040,62 +1068,106 @@ export default function TurnosManagement() {
       <Dialog open={blockDateDialogOpen} onOpenChange={setBlockDateDialogOpen}>
         <DialogContent className="sm:max-w-md border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
           <DialogHeader className="border-b border-slate-200 dark:border-slate-800 pb-3 sm:pb-4">
-            <DialogTitle className="text-base sm:text-lg lg:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600 dark:from-rose-400 dark:to-pink-400">
+            <DialogTitle className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
               Gestionar Fechas Bloqueadas
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Bloquea o desbloquea rangos de fechas
+              Bloquea o desbloquea un día o rango de fechas
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 sm:space-y-4 py-2 sm:py-3 lg:py-4">
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label
-                htmlFor="date-range-start"
-                className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300"
-              >
-                Fecha de inicio
-              </Label>
-              <Input
-                id="date-range-start"
-                type="date"
-                value={dateRangeStart}
-                onChange={(e) => setDateRangeStart(e.target.value)}
-                className="border-2 border-slate-300 dark:border-slate-700 focus:border-rose-500 dark:focus:border-rose-500 font-semibold h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
-              />
+          <div className="space-y-4 sm:space-y-5 py-2 sm:py-3 lg:py-4">
+            <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                Un Solo Día
+              </h3>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label
+                  htmlFor="single-date"
+                  className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300"
+                >
+                  Fecha
+                </Label>
+                <Input
+                  id="single-date"
+                  type="date"
+                  value={singleDateBlock}
+                  onChange={(e) => setSingleDateBlock(e.target.value)}
+                  className="border-2 border-slate-300 dark:border-slate-700 focus:border-indigo-500 dark:focus:border-indigo-500 font-semibold h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleToggleSingleDate("block")}
+                  className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-lg h-7 sm:h-8 text-[10px] sm:text-xs"
+                >
+                  <Lock className="h-3 w-3 mr-1" />
+                  Bloquear
+                </Button>
+                <Button
+                  onClick={() => handleToggleSingleDate("unblock")}
+                  variant="outline"
+                  className="flex-1 border-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30 font-semibold h-7 sm:h-8 text-[10px] sm:text-xs"
+                >
+                  <Unlock className="h-3 w-3 mr-1" />
+                  Habilitar
+                </Button>
+              </div>
             </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label
-                htmlFor="date-range-end"
-                className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300"
-              >
-                Fecha de fin
-              </Label>
-              <Input
-                id="date-range-end"
-                type="date"
-                value={dateRangeEnd}
-                onChange={(e) => setDateRangeEnd(e.target.value)}
-                className="border-2 border-slate-300 dark:border-slate-700 focus:border-rose-500 dark:focus:border-rose-500 font-semibold h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
-              />
+
+            {/* Rango de fechas */}
+            <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                Rango de Fechas
+              </h3>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label
+                  htmlFor="date-range-start"
+                  className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300"
+                >
+                  Fecha de inicio
+                </Label>
+                <Input
+                  id="date-range-start"
+                  type="date"
+                  value={dateRangeStart}
+                  onChange={(e) => setDateRangeStart(e.target.value)}
+                  className="border-2 border-slate-300 dark:border-slate-700 focus:border-indigo-500 dark:focus:border-indigo-500 font-semibold h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
+                />
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label
+                  htmlFor="date-range-end"
+                  className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300"
+                >
+                  Fecha de fin
+                </Label>
+                <Input
+                  id="date-range-end"
+                  type="date"
+                  value={dateRangeEnd}
+                  onChange={(e) => setDateRangeEnd(e.target.value)}
+                  className="border-2 border-slate-300 dark:border-slate-700 focus:border-indigo-500 dark:focus:border-indigo-500 font-semibold h-8 sm:h-9 lg:h-10 text-xs sm:text-sm"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleToggleDateRange("block")}
+                  className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-lg h-7 sm:h-8 text-[10px] sm:text-xs"
+                >
+                  <Lock className="h-3 w-3 mr-1" />
+                  Bloquear
+                </Button>
+                <Button
+                  onClick={() => handleToggleDateRange("unblock")}
+                  variant="outline"
+                  className="flex-1 border-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30 font-semibold h-7 sm:h-8 text-[10px] sm:text-xs"
+                >
+                  <Unlock className="h-3 w-3 mr-1" />
+                  Habilitar
+                </Button>
+              </div>
             </div>
           </div>
-          <DialogFooter className="flex gap-2 sm:gap-3 pt-2 sm:pt-3 lg:pt-4 border-t border-slate-200 dark:border-slate-800">
-            <Button
-              onClick={() => handleToggleDateRange("block")}
-              className="flex-1 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-semibold shadow-lg h-8 sm:h-9 lg:h-10 text-[10px] sm:text-xs lg:text-sm"
-            >
-              <Lock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Bloquear
-            </Button>
-            <Button
-              onClick={() => handleToggleDateRange("unblock")}
-              variant="outline"
-              className="flex-1 border-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/30 font-semibold h-8 sm:h-9 lg:h-10 text-[10px] sm:text-xs lg:text-sm"
-            >
-              <Unlock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Habilitar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
