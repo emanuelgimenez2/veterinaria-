@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DashboardCharts } from "@/components/admin/dashboard-charts"
-import { TurnosManagement } from "@/components/admin/turnos-management"
+import TurnosManagement from "@/components/admin/turnos-management"
 // import { ClientesManagement } from "@/components/admin/clientes-management"
 // import { HistoriasManagement } from "@/components/admin/historias-management"
 import { LayoutDashboard, Calendar, Shield, ArrowLeft } from "lucide-react"
