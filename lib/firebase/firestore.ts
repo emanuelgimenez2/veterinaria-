@@ -58,6 +58,7 @@ export interface Turno {
     timestamp: any
   }
   estado: "pendiente" | "completado" | "cancelado"
+  vacunas?: string[]
 }
 
 export interface Historia {
@@ -102,9 +103,6 @@ export async function getClienteByEmail(email: string) {
   return { id: docSnap.id, ...docSnap.data() } as Cliente
 }
 
-/**
- * 🆕 Actualiza los datos de un cliente existente
- */
 export async function updateCliente(
   clienteId: string,
   data: Partial<Omit<Cliente, "id">>
@@ -131,7 +129,6 @@ export async function createMascota(clienteId: string, data: Omit<Mascota, "id">
     createdAt: new Date().toISOString(),
   })
   
-  // Crear historia clínica automáticamente (documento registro)
   await createHistoriaClinicaRegistro(clienteId, mascotaRef.id)
   
   return mascotaRef
@@ -143,12 +140,8 @@ export async function getMascotas(clienteId: string) {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Mascota)
 }
 
-// Alias para mantener compatibilidad
 export const getMascotasByClienteId = getMascotas
 
-/**
- * 🆕 Actualiza los datos de una mascota existente
- */
 export async function updateMascota(
   clienteId: string,
   mascotaId: string,
@@ -222,7 +215,6 @@ export async function updateHistoriaClinicaRegistro(
   await setDoc(historiaRef, data, { merge: true })
 }
 
-// Aliases para mantener compatibilidad con nombres anteriores
 export const createHistoriaClinica = createHistoriaClinicaRegistro
 export const getHistoriaClinica = getHistoriaClinicaRegistro
 export const updateHistoriaClinica = updateHistoriaClinicaRegistro
@@ -297,7 +289,9 @@ export async function deleteHistoria(
 export async function createTurno(turnoData: Partial<Turno>) {
   const turnosRef = collection(db, "turnos")
   
-  // Asegurarnos de que la estructura sea correcta
+  console.log("📋 FIRESTORE - Datos recibidos en createTurno:", turnoData);
+  console.log("📋 FIRESTORE - Vacunas recibidas:", turnoData.vacunas);
+  
   const turnoCompleto = {
     clienteId: turnoData.clienteId || "",
     mascotaId: turnoData.mascotaId || "",
@@ -314,6 +308,7 @@ export async function createTurno(turnoData: Partial<Turno>) {
       motivo: turnoData.mascota?.motivo || "",
     },
     servicio: turnoData.servicio || "",
+    vacunas: turnoData.vacunas || [],
     fecha: turnoData.fecha || turnoData.turno?.fecha || "",
     hora: turnoData.hora || turnoData.turno?.hora || "",
     turno: {
@@ -324,7 +319,13 @@ export async function createTurno(turnoData: Partial<Turno>) {
     estado: turnoData.estado || "pendiente",
   }
   
-  return await addDoc(turnosRef, turnoCompleto)
+  console.log("📋 FIRESTORE - Turno completo a guardar:", turnoCompleto);
+  console.log("📋 FIRESTORE - Vacunas en turnoCompleto:", turnoCompleto.vacunas);
+  
+  const docRef = await addDoc(turnosRef, turnoCompleto)
+  console.log("✅ FIRESTORE - Turno guardado con ID:", docRef.id);
+  
+  return docRef
 }
 
 export async function getTurnos() {

@@ -1,17 +1,20 @@
+// Guardar como: components/admin/timeline-view.tsx
+
 "use client"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, PawPrint, AlertCircle, CheckCircle2, XCircle } from "lucide-react"
+import { Clock, PawPrint, AlertCircle, CheckCircle2, XCircle, LayoutGrid } from "lucide-react"
 import type { Turno } from "@/lib/firebase/firestore"
 
 interface TimelineViewProps {
   turnos: Turno[]
   selectedDate: string
-  onTurnoClick: (turno: Turno) => void
+  onViewDetails: (turno: Turno) => void
+  onToggleView: () => void
 }
 
-export function TimelineView({ turnos, selectedDate, onTurnoClick }: TimelineViewProps) {
+export function TimelineView({ turnos, selectedDate, onViewDetails, onToggleView }: TimelineViewProps) {
   const startHour = 8
   const endHour = 20
 
@@ -52,15 +55,32 @@ export function TimelineView({ turnos, selectedDate, onTurnoClick }: TimelineVie
   }
 
   const timeSlots = getTimeSlots()
+  const selectedDateTurnos = turnos.filter((t) => t.turno.fecha === selectedDate)
   const now = new Date()
   const currentHour = now.getHours()
   const isToday = selectedDate === now.toISOString().split("T")[0]
 
   return (
     <div className="relative">
+      {/* Header con botón de cambio de vista */}
+      <div className="flex items-center justify-between mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h2 className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 dark:text-white">
+          Vista Timeline
+        </h2>
+        <Button
+          onClick={onToggleView}
+          variant="outline"
+          size="sm"
+          className="h-7 sm:h-8 text-[10px] sm:text-xs"
+        >
+          <LayoutGrid className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+          Vista Grid
+        </Button>
+      </div>
+
       <div className="space-y-0">
         {timeSlots.map((slot) => {
-          const hourTurnos = turnos.filter((t) => t.turno.hora.startsWith(slot.split(":")[0]))
+          const hourTurnos = selectedDateTurnos.filter((t) => t.turno.hora.startsWith(slot.split(":")[0]))
           const hour = Number.parseInt(slot.split(":")[0])
           const isPast = isToday && hour < currentHour
           const isCurrentHour = isToday && hour === currentHour
@@ -148,7 +168,7 @@ export function TimelineView({ turnos, selectedDate, onTurnoClick }: TimelineVie
                           </div>
 
                           <Button
-                            onClick={() => onTurnoClick(turno)}
+                            onClick={() => onViewDetails(turno)}
                             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-lg sm:rounded-xl h-7 sm:h-8 lg:h-9 text-[10px] sm:text-xs lg:text-sm shadow-lg"
                           >
                             Ver Detalles

@@ -43,7 +43,7 @@ export function useTurnoForm() {
     motivo: "",
     fecha: "",
     hora: "",
-    vacunas: [] as string[], // NUEVO
+    vacunas: [] as string[],
   });
 
   const {
@@ -103,7 +103,7 @@ export function useTurnoForm() {
       setDatosEditados(true);
     }
 
-    // NUEVO: Limpiar vacunas si cambia el servicio
+    // Limpiar vacunas si cambia el servicio
     if (field === "servicio" && value !== "vacunacion") {
       setFormData(prev => ({ ...prev, vacunas: [] }));
     }
@@ -138,8 +138,9 @@ export function useTurnoForm() {
     }
   };
 
-  // NUEVO: Función para manejar cambio de vacunas
+  // Función para manejar cambio de vacunas
   const handleVacunasChange = (vacunas: string[]) => {
+    console.log("🔍 handleVacunasChange - Vacunas recibidas:", vacunas);
     setFormData(prev => ({
       ...prev,
       vacunas
@@ -149,7 +150,7 @@ export function useTurnoForm() {
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // NUEVO: Validar vacunas si el servicio es vacunación Y es perro o gato
+    // Validar vacunas si el servicio es vacunación Y es perro o gato
     if (
       formData.servicio === "vacunacion" && 
       (formData.tipoMascota === "perro" || formData.tipoMascota === "gato") &&
@@ -185,7 +186,6 @@ export function useTurnoForm() {
         });
         clienteId = clienteRef.id;
       } else if (datosEditados) {
-        // Actualizar datos del cliente si fueron modificados
         await updateCliente(clienteId, {
           nombre: formData.nombre,
           telefono: formData.telefono,
@@ -205,7 +205,6 @@ export function useTurnoForm() {
         });
         mascotaId = mascotaRef.id;
       } else {
-        // Actualizar mascota existente si cambió algo
         await updateMascota(clienteId, mascotaId, {
           nombre: formData.nombreMascota,
           tipo: formData.tipoMascota,
@@ -221,8 +220,13 @@ export function useTurnoForm() {
         tipo: formData.tipoMascota,
       };
 
-      // 4. Crear el turno - NUEVO: incluir vacunas
-      await createTurno({
+      // 4. Crear el turno - incluir vacunas
+      console.log("🔍 DEBUG - FormData completo:", formData);
+      console.log("🔍 DEBUG - Servicio:", formData.servicio);
+      console.log("🔍 DEBUG - Vacunas en formData:", formData.vacunas);
+      console.log("🔍 DEBUG - ¿Es vacunación?:", formData.servicio === "vacunacion");
+      
+      const turnoData = {
         clienteId: clienteId,
         mascotaId: mascotaId || "",
         cliente: {
@@ -240,9 +244,14 @@ export function useTurnoForm() {
         servicio: formData.servicio,
         fecha: formData.fecha,
         hora: formData.hora,
-        estado: "pendiente",
-        vacunas: formData.servicio === "vacunacion" ? formData.vacunas : [], // NUEVO
-      });
+        estado: "pendiente" as const,
+        vacunas: formData.vacunas,
+      };
+      
+      console.log("🔍 DEBUG - Turno data a enviar:", turnoData);
+      console.log("🔍 DEBUG - Vacunas en turnoData:", turnoData.vacunas);
+      
+      await createTurno(turnoData);
 
       // 5. Enviar email de confirmación
       const emailEnviado = await enviarEmailConfirmacion({
@@ -283,7 +292,7 @@ export function useTurnoForm() {
   return {
     formData,
     handleChange,
-    handleVacunasChange, // NUEVO
+    handleVacunasChange,
     handleSubmit: handlePreSubmit,
     handleConfirmedSubmit,
     loading,
