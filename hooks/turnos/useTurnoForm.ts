@@ -43,6 +43,7 @@ export function useTurnoForm() {
     motivo: "",
     fecha: "",
     hora: "",
+    vacunas: [] as string[], // NUEVO
   });
 
   const {
@@ -102,6 +103,11 @@ export function useTurnoForm() {
       setDatosEditados(true);
     }
 
+    // NUEVO: Limpiar vacunas si cambia el servicio
+    if (field === "servicio" && value !== "vacunacion") {
+      setFormData(prev => ({ ...prev, vacunas: [] }));
+    }
+
     if (field === "mascotaExistenteId") {
       setMostrarNuevaMascota(value === "nueva");
       
@@ -132,8 +138,31 @@ export function useTurnoForm() {
     }
   };
 
+  // NUEVO: Función para manejar cambio de vacunas
+  const handleVacunasChange = (vacunas: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      vacunas
+    }));
+  };
+
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // NUEVO: Validar vacunas si el servicio es vacunación Y es perro o gato
+    if (
+      formData.servicio === "vacunacion" && 
+      (formData.tipoMascota === "perro" || formData.tipoMascota === "gato") &&
+      formData.vacunas.length === 0
+    ) {
+      toast({
+        title: "⚠️ Vacunas requeridas",
+        description: "Por favor selecciona al menos una vacuna",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setShowConfirmModal(true);
   };
 
@@ -192,7 +221,7 @@ export function useTurnoForm() {
         tipo: formData.tipoMascota,
       };
 
-      // 4. Crear el turno
+      // 4. Crear el turno - NUEVO: incluir vacunas
       await createTurno({
         clienteId: clienteId,
         mascotaId: mascotaId || "",
@@ -212,6 +241,7 @@ export function useTurnoForm() {
         fecha: formData.fecha,
         hora: formData.hora,
         estado: "pendiente",
+        vacunas: formData.servicio === "vacunacion" ? formData.vacunas : [], // NUEVO
       });
 
       // 5. Enviar email de confirmación
@@ -253,6 +283,7 @@ export function useTurnoForm() {
   return {
     formData,
     handleChange,
+    handleVacunasChange, // NUEVO
     handleSubmit: handlePreSubmit,
     handleConfirmedSubmit,
     loading,

@@ -1,7 +1,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -36,6 +35,7 @@ interface ModalConfirmacionProps {
     motivo: string;
     fecha: string;
     hora: string;
+    vacunas: string[]; // NUEVO
   };
   selectedDate?: Date;
   loading: boolean;
@@ -54,6 +54,17 @@ export function ModalConfirmacion({
     telemedicina: "💻 Telemedicina",
     vacunacion: "💉 Vacunación",
     urgencias: "🚨 Urgencias",
+  };
+
+  // NUEVO: Mapeo de IDs de vacunas a nombres legibles
+  const vacunaNombres: Record<string, string> = {
+    // Perros
+    "antirrabica": "Antirrábica",
+    "quintuple": "Quíntuple",
+    "sextuple": "Séxtuple",
+    // Gatos
+    "triple-felina": "Triple Felina",
+    "leucemia-felina": "Leucemia Felina",
   };
 
   return (
@@ -105,7 +116,23 @@ export function ModalConfirmacion({
             </div>
             <div className="text-[11px] space-y-0.5">
               <p className="font-medium">{servicioNombres[formData.servicio]}</p>
-              <p className="text-muted-foreground line-clamp-1">{formData.motivo}</p>
+              
+              {/* NUEVO: Mostrar vacunas si el servicio es vacunación */}
+              {formData.servicio === "vacunacion" && formData.vacunas && formData.vacunas.length > 0 && (
+                <div className="mt-1.5 pl-2 border-l-2 border-primary/30 bg-primary/5 rounded-r py-1 pr-2">
+                  <p className="text-muted-foreground text-[10px] mb-0.5 font-semibold">Vacunas seleccionadas:</p>
+                  <ul className="space-y-0.5">
+                    {formData.vacunas.map((vacunaId, index) => (
+                      <li key={index} className="text-foreground font-medium flex items-center gap-1">
+                        <span className="text-primary">•</span>
+                        {vacunaNombres[vacunaId] || vacunaId}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              <p className="text-muted-foreground line-clamp-1 mt-1">{formData.motivo}</p>
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import { TurnoHeader } from "./TurnoHeader";
 import { ClienteSection } from "./ClienteSection";
 import { MascotaSection } from "./MascotaSection";
 import { ServicioSection } from "./ServicioSection";
+import { VacunaSection } from "./VacunaSection"; // NUEVO
 import { FechaHoraSection } from "./FechaHoraSection";
 import { TurnoSubmitButton } from "./TurnoSubmitButton";
 import { ModalConfirmacion } from "./ModalConfirmacion";
@@ -19,6 +20,7 @@ export function TurnoForm() {
     handleChange,
     handleSubmit,
     handleConfirmedSubmit,
+    handleVacunasChange, // NUEVO
     loading,
     clienteExistente,
     mascotas,
@@ -32,6 +34,9 @@ export function TurnoForm() {
     showConfirmModal,
     setShowConfirmModal,
   } = useTurnoForm();
+
+  // NUEVO: Determinar si mostrar sección de vacunas
+  const mostrarVacunas = formData.servicio === "vacunacion" && formData.tipoMascota;
 
   return (
     <>
@@ -71,6 +76,23 @@ export function TurnoForm() {
 
             {/* Servicio */}
             <ServicioSection formData={formData} handleChange={handleChange} />
+
+            {/* NUEVO: Sección de Vacunas - Solo se muestra si el servicio es vacunación */}
+            {mostrarVacunas && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border/50" />
+                  </div>
+                </div>
+                
+                <VacunaSection
+                  tipoMascota={formData.tipoMascota}
+                  vacunasSeleccionadas={formData.vacunas}
+                  onVacunasChange={handleVacunasChange}
+                />
+              </>
+            )}
 
             {/* Divider */}
             <div className="relative">
