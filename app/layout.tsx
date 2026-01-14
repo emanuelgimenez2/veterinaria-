@@ -9,29 +9,29 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Salut Animal Domiciliaria - Atención Veterinaria a Domicilio",
+  title: "Salud Animal Domiciliaria - Atención Veterinaria a Domicilio",
   description:
     "Medicina veterinaria profesional y humana en el hogar. Atención personalizada sin el estrés de la consulta tradicional. Cuidado con tiempo, criterio y vocación.",
   generator: "v0.app",
   keywords: [
     "veterinaria",
     "veterinaria a domicilio",
-    "Salut Animal",
+    "Salud Animal",
     "atención domiciliaria",
     "mascotas",
     "medicina veterinaria",
     "veterinario en casa",
   ],
-  authors: [{ name: "Salut Animal Domiciliaria" }],
-  creator: "Salut Animal Domiciliaria",
+  authors: [{ name: "Salud Animal Domiciliaria" }],
+  creator: "Salud Animal Domiciliaria",
 
   // Open Graph (Facebook, WhatsApp, LinkedIn)
   openGraph: {
     type: "website",
     locale: "es_AR",
-    url: "https://salutanimal.com", // Cambia por tu dominio real
-    siteName: "Salut Animal Domiciliaria",
-    title: "Salut Animal Domiciliaria - Atención Veterinaria en el Hogar",
+    url: "https://veterinariaps.vercel.app/", // Cambia por tu dominio real
+    siteName: "Salud Animal Domiciliaria",
+    title: "Salud Animal Domiciliaria - Atención Veterinaria en el Hogar",
     description:
       "Medicina veterinaria profesional y humana en el hogar. Atención personalizada sin el estrés de la consulta tradicional.",
     images: [
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
         url: "/metadato.jpg",
         width: 1200,
         height: 630,
-        alt: "Salut Animal Domiciliaria - Atención Veterinaria a Domicilio",
+        alt: "Salud Animal Domiciliaria - Atención Veterinaria a Domicilio",
       },
     ],
   },
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   // Twitter
   twitter: {
     card: "summary_large_image",
-    title: "Salut Animal Domiciliaria - Atención Veterinaria en el Hogar",
+    title: "Salud Animal Domiciliaria - Atención Veterinaria en el Hogar",
     description:
       "Medicina veterinaria profesional y humana en el hogar. Atención personalizada sin el estrés de la consulta tradicional.",
     images: ["/metadato.jpg"],
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
   },
 
   // Configuración adicional
-  metadataBase: new URL("https://salutanimal.com"), // Cambia por tu dominio real
+  metadataBase: new URL("https://veterinariaps.vercel.app/"), // Cambia por tu dominio real
   alternates: {
     canonical: "/",
   },

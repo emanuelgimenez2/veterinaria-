@@ -50,7 +50,7 @@ export function Navbar() {
             <div className="relative h-12 w-12 rounded-xl overflow-hidden shadow-md ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
               <Image
                 src="/logo1.png"
-                alt="Salut Animal Logo"
+                alt="Salud Animal Logo"
                 fill
                 className="object-cover"
                 priority
