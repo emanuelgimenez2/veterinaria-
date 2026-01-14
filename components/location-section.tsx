@@ -13,23 +13,29 @@ export function LocationSection() {
       icon: Clock,
       title: "Horarios",
       detail: "Lun-Sáb: 8:00-20:00",
-      subDetail: "Urgencias 24/7"
+      subDetail: "Urgencias 24/7",
     },
     {
       icon: Phone,
       title: "Teléfono",
       detail: "+54 9 379 466-2600",
       subDetail: "WhatsApp disponible",
-      link: "tel:+5493794662600"
+      link: "tel:+5493794662600",
     },
     {
       icon: Mail,
       title: "Email",
       detail: "veterinariapriscilas@gmail.com",
       subDetail: "Respuesta en 24hs",
-      link: "mailto:veterinariapriscilas@gmail.com"
+      link: "mailto:veterinariapriscilas@gmail.com",
     },
-  ]
+    {
+      icon: Mail,
+      title: "Área de Cobertura",
+      detail: "Concepción del Uruguay.",
+      subDetail: "Servicio personalizado en tu domicilio.",
+    },
+  ];
 
   return (
     <section className="relative py-16 md:py-20 lg:py-28 overflow-hidden">
@@ -107,23 +113,7 @@ export function LocationSection() {
               ))}
             </div>
 
-            {/* Service Area Badge */}
-            <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 sm:mt-6 sm:p-4">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <div className="p-1.5 rounded-lg bg-primary/20 sm:p-2">
-                  <MapPin className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-foreground mb-1 flex items-center gap-2 sm:text-sm">
-                    Área de Cobertura
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse sm:h-2 sm:w-2" />
-                  </h4>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed sm:text-sm">
-                    Concepción del Uruguay y zonas aledañas. Servicio personalizado en tu domicilio.
-                  </p>
-                </div>
-              </div>
-            </div>
+        
           </div>
 
           {/* Map Section */}

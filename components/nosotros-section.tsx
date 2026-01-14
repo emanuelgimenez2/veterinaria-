@@ -115,7 +115,7 @@ export function NosotrosSection() {
               <div className="relative aspect-[3/3] rounded-3xl overflow-hidden border-4 border-green-600/10 shadow-2xl group-hover:border-green-600/30 transition-all duration-500">
                 <Image
                   src="/Dra.jpg"
-                  alt="Salut Animal Domiciliaria"
+                  alt="Salud Animal Domiciliaria"
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -132,7 +132,7 @@ export function NosotrosSection() {
           >
             <div className="space-y-4">
               <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
-                Salut Animal Domiciliaria
+                Salud Animal Domiciliaria
               </h3>
               <p className="text-lg font-semibold text-green-700">
                 Atención veterinaria personalizada, profesional y humana, en el

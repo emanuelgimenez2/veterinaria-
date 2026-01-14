@@ -71,7 +71,7 @@ export function Navbar() {
                       color: '#2C5F4F',
                       letterSpacing: '0.15em'
                     }}>
-                Médica Veterinaria
+                MEDICINA Veterinaria
               </span>
             </div>
           </Link>
