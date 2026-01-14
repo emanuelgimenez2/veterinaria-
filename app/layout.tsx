@@ -1,41 +1,45 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { Navbar } from "@/components/navbar"
-import "./globals.css"
+import type React from "react";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { Navbar } from "@/components/navbar";
+import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Clínica Veterinaria Priscila Silva - Cardióloga Veterinaria",
-  description: "Cardióloga veterinaria especializada en el cuidado del corazón de tus mascotas. Servicios veterinarios de calidad y atención profesional.",
+  title: "Salut Animal Domiciliaria - Atención Veterinaria a Domicilio",
+  description:
+    "Medicina veterinaria profesional y humana en el hogar. Atención personalizada sin el estrés de la consulta tradicional. Cuidado con tiempo, criterio y vocación.",
   generator: "v0.app",
-  keywords: ["veterinaria", "cardiología veterinaria", "Priscila Silva", "clínica veterinaria", "mascotas", "cardióloga"],
-  authors: [{ name: "Priscila Silva" }],
-  creator: "Priscila Silva",
-  
+  keywords: [
+    "veterinaria",
+    "veterinaria a domicilio",
+    "Salut Animal",
+    "atención domiciliaria",
+    "mascotas",
+    "medicina veterinaria",
+    "veterinario en casa",
+  ],
+  authors: [{ name: "Salut Animal Domiciliaria" }],
+  creator: "Salut Animal Domiciliaria",
+
   // Open Graph (Facebook, WhatsApp, LinkedIn)
   openGraph: {
     type: "website",
     locale: "es_AR",
-    url: "https://veterinaria-priscila.com", // Cambia por tu dominio real
-    siteName: "Clínica Veterinaria Priscila Silva",
-    title: "Priscila Silva - Cardióloga Veterinaria",
-    description: "Cardióloga veterinaria especializada en el cuidado del corazón de tus mascotas. Atención profesional y de calidad.",
+    url: "https://salutanimal.com", // Cambia por tu dominio real
+    siteName: "Salut Animal Domiciliaria",
+    title: "Salut Animal Domiciliaria - Atención Veterinaria en el Hogar",
+    description:
+      "Medicina veterinaria profesional y humana en el hogar. Atención personalizada sin el estrés de la consulta tradicional.",
     images: [
       {
-        url: "/og-image.png", // Crea esta imagen de 1200x630px
+        url: "/metadato.jpg",
         width: 1200,
         height: 630,
-        alt: "Clínica Veterinaria Priscila Silva",
-      },
-      {
-        url: "/logo1.png",
-        width: 800,
-        height: 600,
-        alt: "Logo Priscila Silva Veterinaria",
+        alt: "Salut Animal Domiciliaria - Atención Veterinaria a Domicilio",
       },
     ],
   },
@@ -43,10 +47,10 @@ export const metadata: Metadata = {
   // Twitter
   twitter: {
     card: "summary_large_image",
-    title: "Priscila Silva - Cardióloga Veterinaria",
-    description: "Cardióloga veterinaria especializada en el cuidado del corazón de tus mascotas.",
-    images: ["/og-image.png"], // Misma imagen que Open Graph
-    creator: "@tuusuario", // Opcional: tu usuario de Twitter
+    title: "Salut Animal Domiciliaria - Atención Veterinaria en el Hogar",
+    description:
+      "Medicina veterinaria profesional y humana en el hogar. Atención personalizada sin el estrés de la consulta tradicional.",
+    images: ["/metadato.jpg"],
   },
 
   // Iconos
@@ -69,16 +73,16 @@ export const metadata: Metadata = {
   },
 
   // Configuración adicional
-  metadataBase: new URL("https://veterinaria-priscila.com"), // Cambia por tu dominio
+  metadataBase: new URL("https://salutanimal.com"), // Cambia por tu dominio real
   alternates: {
     canonical: "/",
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="es">
@@ -88,5 +92,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
