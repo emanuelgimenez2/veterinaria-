@@ -1,6 +1,11 @@
 "use client"
 
-import { Stethoscope, Scissors, Syringe, Heart } from "lucide-react"
+import {
+  Stethoscope,
+  Scissors,
+  Syringe,
+  Heart,
+  HeartPulse} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card"
 import { useState } from "react"
 
@@ -8,18 +13,20 @@ const services = [
   {
     icon: Stethoscope,
     title: "Consultas Generales",
-    description: "Exámenes completos y diagnósticos profesionales para tu mascota",
+    description:
+      "Exámenes completos y diagnósticos profesionales para tu mascota",
     color: "from-blue-500/10 to-cyan-500/10",
     iconColor: "text-blue-600",
-    borderColor: "group-hover:border-blue-500/50"
+    borderColor: "group-hover:border-blue-500/50",
   },
   {
     icon: Scissors,
     title: "Telemedicina",
-    description: "Procedimientos para detectar online y con rapidez el diagnóstico",
+    description:
+      "Procedimientos para detectar online y con rapidez el diagnóstico",
     color: "from-purple-500/10 to-pink-500/10",
     iconColor: "text-purple-600",
-    borderColor: "group-hover:border-purple-500/50"
+    borderColor: "group-hover:border-purple-500/50",
   },
   {
     icon: Syringe,
@@ -27,17 +34,18 @@ const services = [
     description: "Plan de vacunación completo para proteger a tu mascota",
     color: "from-green-500/10 to-emerald-500/10",
     iconColor: "text-green-600",
-    borderColor: "group-hover:border-green-500/50"
+    borderColor: "group-hover:border-green-500/50",
   },
   {
-    icon: Heart,
-    title: "Urgencias",
-    description: "Atención de emergencia las 24 horas del día",
+    icon: HeartPulse,
+    title: "Cardiología",
+    description:
+      "Diagnóstico y tratamiento de enfermedades cardiovasculares",
     color: "from-red-500/10 to-rose-500/10",
     iconColor: "text-red-600",
-    borderColor: "group-hover:border-red-500/50"
+    borderColor: "group-hover:border-red-500/50",
   },
-]
+];
 
 export function ServicesSection() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)

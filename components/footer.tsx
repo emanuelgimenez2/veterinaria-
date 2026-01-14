@@ -54,7 +54,7 @@ export function Footer() {
                         color: '#2C5F4F',
                         letterSpacing: '0.15em'
                       }}>
-                  Cardióloga Veterinaria
+                  Médica Veterinaria
                 </span>
               </div>
             </Link>
@@ -204,7 +204,7 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>
           <p className="text-center text-xs text-muted-foreground sm:text-left md:text-sm">
-            &copy; {new Date().getFullYear()} Priscila Silva - Cardióloga Veterinaria. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} Priscila Silva - MÉDICA Veterinaria. Todos los derechos reservados.
           </p>
           <div className="flex items-center gap-4 text-xs md:text-sm">
             <Link href="/privacidad" className="text-muted-foreground hover:text-primary transition-colors">

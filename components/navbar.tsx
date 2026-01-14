@@ -71,7 +71,7 @@ export function Navbar() {
                       color: '#2C5F4F',
                       letterSpacing: '0.15em'
                     }}>
-                Cardióloga Veterinaria
+                Médica Veterinaria
               </span>
             </div>
           </Link>
