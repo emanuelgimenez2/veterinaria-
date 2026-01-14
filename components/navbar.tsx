@@ -64,7 +64,7 @@ export function Navbar() {
   color: '#F08CAE',
   letterSpacing: '0em'
 }}>
-                Salut Animal Domiciliaria
+                Salud Animal Domiciliaria
               </span>
               <span className="text-[10px] sm:text-xs font-semibold tracking-wider uppercase"
                     style={{ 
