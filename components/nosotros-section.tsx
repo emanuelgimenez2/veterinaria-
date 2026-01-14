@@ -142,7 +142,7 @@ export function NosotrosSection() {
 
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p className="text-base sm:text-lg">
-                En Salut Animal Domiciliaria creemos que la medicina veterinaria
+                En Salud Animal Domiciliaria creemos que la medicina veterinaria
                 va más allá del diagnóstico: se trata de comprender al paciente,
                 respetar sus tiempos y acompañar a su familia con compromiso y
                 calidez.
