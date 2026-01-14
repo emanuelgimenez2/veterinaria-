@@ -50,21 +50,23 @@ export function Navbar() {
             <div className="relative h-12 w-12 rounded-xl overflow-hidden shadow-md ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
               <Image
                 src="/logo1.png"
-                alt="VetCare Logo"
+                alt="Salut Animal Logo"
                 fill
                 className="object-cover"
                 priority
               />
             </div>
             <div className="flex flex-col">
-              <span className="text-2xl font-bold tracking-tight md:text-3xl"
-                    style={{ 
-                      fontFamily: "'Brush Script MT', cursive",
-                      color: '#F08CAE'
-                    }}>
-                Priscila Silva
+              <span className="text-lg font-bold tracking-tight sm:text-xl md:text-2xl"
+                  style={{ 
+  fontFamily: "'Roboto', 'Open Sans', system-ui, sans-serif",
+  fontWeight: '700',
+  color: '#F08CAE',
+  letterSpacing: '0em'
+}}>
+                Salut Animal Domiciliaria
               </span>
-              <span className="text-xs font-semibold tracking-wider uppercase"
+              <span className="text-[10px] sm:text-xs font-semibold tracking-wider uppercase"
                     style={{ 
                       color: '#2C5F4F',
                       letterSpacing: '0.15em'
