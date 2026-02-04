@@ -276,6 +276,24 @@ export function useTurnoForm(options: UseTurnoFormOptions = {}) {
       
       await createTurno(turnoData);
 
+      // 5. Crear evento en Google Calendar
+      try {
+        await fetch("/api/calendar/create-event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mascotaNombre: mascotaSeleccionada.nombre,
+            duenoNombre: formData.nombre,
+            motivo: formData.motivo,
+            fecha: formData.fecha,
+            hora: formData.hora,
+            servicio: formData.servicio,
+          }),
+        });
+      } catch (e) {
+        console.error("No se pudo crear evento en Calendar:", e);
+      }
+
       // 5. Enviar email de confirmación
       const emailEnviado = await enviarEmailConfirmacion({
         nombre_y_apellido: formData.nombre,
