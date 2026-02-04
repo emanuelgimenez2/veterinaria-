@@ -28,6 +28,9 @@ function getFechaTurno(t: Turno) {
 export function MisTurnosCliente({ dni, turnos, onCancelar, onRefresh }: MisTurnosClienteProps) {
   const [agendarOpen, setAgendarOpen] = useState(false);
   const hoy = new Date().toISOString().slice(0, 10);
+  const manana = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
 
   const ordenados = useMemo(() => {
     return [...turnos].sort((a, b) => {
@@ -40,7 +43,12 @@ export function MisTurnosCliente({ dni, turnos, onCancelar, onRefresh }: MisTurn
 
   const isCancelable = (turno: Turno) => {
     const fecha = getFechaTurno(turno);
-    return turno.estado === "pendiente" && fecha && fecha >= hoy;
+    return turno.estado === "pendiente" && fecha && fecha >= manana;
+  };
+
+  const esHoy = (turno: Turno) => {
+    const fecha = getFechaTurno(turno);
+    return turno.estado === "pendiente" && fecha === hoy;
   };
 
   return (
@@ -122,6 +130,11 @@ export function MisTurnosCliente({ dni, turnos, onCancelar, onRefresh }: MisTurn
                       </Button>
                     )}
                   </div>
+                  {esHoy(turno) && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 pt-1">
+                      El médico ya está de recorrido.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );

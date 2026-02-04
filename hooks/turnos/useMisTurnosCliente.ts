@@ -76,7 +76,10 @@ export function useMisTurnosCliente() {
       if (!turno.id) return;
       const fecha = getFechaTurno(turno);
       const hoy = new Date().toISOString().slice(0, 10);
-      if (turno.estado !== "pendiente" || !fecha || fecha < hoy) {
+      const manana = new Date(Date.now() + 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+      if (turno.estado !== "pendiente" || !fecha || fecha < manana) {
         toast({ title: "No se puede cancelar", description: "Solo turnos pendientes futuros." });
         return;
       }

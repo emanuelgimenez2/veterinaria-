@@ -1081,7 +1081,6 @@ export function LibretaSanitariaManagement() {
                                           <button type="button" className="p-1.5 rounded hover:bg-teal-100 dark:hover:bg-teal-900/40" onClick={(e) => { e.stopPropagation(); openGenerarHistoriaFromTurno(t, clienteExpandido.cliente, m); }} title="Generar Historia Clínica"><FileText className="h-3.5 w-3.5 text-teal-600" /></button>
                                         )}
                                         <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800" onClick={(e) => { e.stopPropagation(); openDetailTurno(); }} title="Ver detalles"><Eye className="h-3.5 w-3.5" /></button>
-                                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800" onClick={(e) => { e.stopPropagation(); openEditTurno(t); }} title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
                                       </div>
                                     </div>
                                   </div>
@@ -1356,15 +1355,6 @@ export function LibretaSanitariaManagement() {
                     value={formHistoria.observaciones}
                     onChange={(e) => setFormHistoria((f) => ({ ...f, observaciones: e.target.value }))}
                     className="mt-1 min-h-[50px] text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Próxima visita</Label>
-                  <Input
-                    type="date"
-                    value={formHistoria.proximaVisita}
-                    onChange={(e) => setFormHistoria((f) => ({ ...f, proximaVisita: e.target.value }))}
-                    className="mt-1 h-9"
                   />
                 </div>
               </>

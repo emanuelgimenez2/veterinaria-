@@ -104,7 +104,6 @@ export default function MisTurnosPage() {
                 </TabsContent>
                 <TabsContent value="libreta" className="mt-4">
                   <MiLibretaCliente
-                    clienteId={cliente.id!}
                     mascotas={mascotas}
                     turnos={turnos}
                   />
