@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -10,8 +10,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/hooks/use-toast";
+import { createHistoria, updateTurno } from "@/lib/firebase/firestore";
+import type { Turno } from "@/lib/firebase/firestore";
 
 import { useTurnosManagement } from "@/hooks/turnos/useTurnosManagement";
 import { CalendarView } from "./calendar-view";
@@ -43,8 +58,10 @@ export default function TurnosManagement() {
     handleCancel,
     handleDelete,
     handleSaveEdit,
+    fetchTurnos,
   } = useTurnosManagement();
 
+  const { toast } = useToast();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [blockDateDialogOpen, setBlockDateDialogOpen] = useState(false);
@@ -54,6 +71,24 @@ export default function TurnosManagement() {
   const [dateRangeStart, setDateRangeStart] = useState<string>("");
   const [dateRangeEnd, setDateRangeEnd] = useState<string>("");
   const [viewMode, setViewMode] = useState<"timeline" | "grid">("timeline");
+  const [gridMode, setGridMode] = useState<"date" | "full">("date");
+
+  const [generateHistoriaTurno, setGenerateHistoriaTurno] = useState<Turno | null>(null);
+  const [formNotaRapida, setFormNotaRapida] = useState({
+    diagnostico: "",
+    tratamiento: "",
+    pesoActual: "",
+    temperatura: "",
+    observaciones: "",
+  });
+  const [savingNota, setSavingNota] = useState(false);
+
+  useEffect(() => {
+    if (generateHistoriaTurno) {
+      const motivo = generateHistoriaTurno.mascota?.motivo ?? "Consulta";
+      setFormNotaRapida((f) => ({ ...f, diagnostico: motivo, tratamiento: "", pesoActual: "", temperatura: "", observaciones: "" }));
+    }
+  }, [generateHistoriaTurno]);
 
   const handleViewDetails = (turno: any) => {
     setSelectedTurno(turno);
@@ -77,6 +112,47 @@ export default function TurnosManagement() {
     setDetailsDialogOpen(false);
     setSelectedTurno(null);
     setMascotaDetails(null);
+  };
+
+  const handleGenerateHistoria = (turno: Turno) => {
+    setGenerateHistoriaTurno(turno);
+    setDetailsDialogOpen(false);
+  };
+
+  const saveNotaRapida = async () => {
+    const t = generateHistoriaTurno;
+    if (!t?.id || !t.clienteId || !t.mascotaId) return;
+    const diag = String(formNotaRapida.diagnostico ?? "").trim();
+    if (!diag) {
+      toast({ title: "Campo obligatorio", description: "Completá el Diagnóstico.", variant: "destructive" });
+      return;
+    }
+    const fecha = t.turno?.fecha ?? new Date().toISOString().slice(0, 10);
+    const partesObs: string[] = [];
+    if (formNotaRapida.pesoActual?.trim()) partesObs.push(`Peso actual: ${formNotaRapida.pesoActual.trim()}`);
+    if (formNotaRapida.temperatura?.trim()) partesObs.push(`Temperatura: ${formNotaRapida.temperatura.trim()} °C`);
+    if (formNotaRapida.observaciones?.trim()) partesObs.push(`Observaciones: ${formNotaRapida.observaciones.trim()}`);
+    const observacionesFinal = partesObs.length ? partesObs.join("\n") : "";
+    setSavingNota(true);
+    try {
+      await createHistoria(t.clienteId, t.mascotaId, {
+        fechaAtencion: fecha,
+        motivo: t.mascota?.motivo ?? "Consulta",
+        diagnostico: diag,
+        tratamiento: formNotaRapida.tratamiento?.trim() || "—",
+        observaciones: observacionesFinal,
+        proximaVisita: "",
+      });
+      await updateTurno(t.id, { estado: "completado" });
+      await fetchTurnos();
+      toast({ title: "Nota clínica guardada", description: "El turno se marcó como completado." });
+      setGenerateHistoriaTurno(null);
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Error al guardar", variant: "destructive" });
+    } finally {
+      setSavingNota(false);
+    }
   };
 
   if (loading) {
@@ -175,7 +251,9 @@ export default function TurnosManagement() {
             <GridView
               selectedDate={selectedDate}
               turnos={turnos}
-              onViewDetails={handleViewDetails}
+              onTurnoClick={handleViewDetails}
+              gridMode={gridMode}
+              onGridModeChange={setGridMode}
               onToggleView={() => setViewMode("timeline")}
             />
           )}
@@ -194,7 +272,85 @@ export default function TurnosManagement() {
         onCancel={(id) => handleCancel(id, closeDetailsModal)}
         onEdit={handleEdit}
         onDelete={(id) => handleDelete(id, closeDetailsModal)}
+        onGenerateHistoria={handleGenerateHistoria}
       />
+
+      <Dialog open={!!generateHistoriaTurno} onOpenChange={(open) => !open && setGenerateHistoriaTurno(null)}>
+        <DialogContent className="sm:max-w-lg border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Nota clínica rápida
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600 dark:text-slate-400">
+              {generateHistoriaTurno
+                ? `${generateHistoriaTurno.cliente?.nombre ?? ""} – ${generateHistoriaTurno.mascota?.nombre ?? ""}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-3">
+            <div>
+              <Label className="text-xs font-semibold">Diagnóstico *</Label>
+              <Textarea
+                value={formNotaRapida.diagnostico}
+                onChange={(e) => setFormNotaRapida((f) => ({ ...f, diagnostico: e.target.value }))}
+                className="mt-1 min-h-[72px] text-sm"
+                placeholder="Motivo de consulta o diagnóstico inicial..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Tratamiento</Label>
+              <Textarea
+                value={formNotaRapida.tratamiento}
+                onChange={(e) => setFormNotaRapida((f) => ({ ...f, tratamiento: e.target.value }))}
+                className="mt-1 min-h-[60px] text-sm"
+                placeholder="Tratamiento indicado (opcional)"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Peso actual (kg)</Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={formNotaRapida.pesoActual}
+                  onChange={(e) => setFormNotaRapida((f) => ({ ...f, pesoActual: e.target.value }))}
+                  className="mt-1 h-9"
+                  placeholder="Ej. 12.5"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Temperatura (°C)</Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={formNotaRapida.temperatura}
+                  onChange={(e) => setFormNotaRapida((f) => ({ ...f, temperatura: e.target.value }))}
+                  className="mt-1 h-9"
+                  placeholder="Opcional"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Observaciones</Label>
+              <Textarea
+                value={formNotaRapida.observaciones}
+                onChange={(e) => setFormNotaRapida((f) => ({ ...f, observaciones: e.target.value }))}
+                className="mt-1 min-h-[60px] text-sm"
+                placeholder="Notas adicionales (opcional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGenerateHistoriaTurno(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={saveNotaRapida} disabled={savingNota} className="bg-emerald-600 hover:bg-emerald-700">
+              {savingNota ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Guardar y marcar turno completado
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <EditTurnoModal
         open={editDialogOpen}

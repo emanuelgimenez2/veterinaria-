@@ -4,8 +4,16 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, PawPrint, AlertCircle, CheckCircle2, XCircle, LayoutGrid } from "lucide-react"
+import { Clock, PawPrint, AlertCircle, CheckCircle2, XCircle, LayoutGrid, Dog, Cat, Bird } from "lucide-react"
 import type { Turno } from "@/lib/firebase/firestore"
+
+function getMascotaIcon(tipo: string) {
+  const t = tipo?.toLowerCase() || ""
+  if (t.includes("perro") || t.includes("dog")) return Dog
+  if (t.includes("gato") || t.includes("cat")) return Cat
+  if (t.includes("ave") || t.includes("bird") || t.includes("pájaro")) return Bird
+  return PawPrint
+}
 
 interface TimelineViewProps {
   turnos: Turno[]
@@ -154,7 +162,10 @@ export function TimelineView({ turnos, selectedDate, onViewDetails, onToggleView
                                 )}
                               </div>
                               <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs lg:text-sm text-slate-600 dark:text-slate-400">
-                                <PawPrint className="h-2.5 w-2.5 sm:h-3 sm:w-3 lg:h-4 lg:w-4" />
+                                {(() => {
+                                  const MascotaIcon = getMascotaIcon(turno.mascota?.tipo ?? "")
+                                  return <MascotaIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 lg:h-4 lg:w-4" />
+                                })()}
                                 <span className="font-semibold truncate">{turno.mascota.nombre}</span>
                                 <span className="text-[9px] sm:text-[10px] lg:text-xs">({turno.mascota.tipo})</span>
                               </div>

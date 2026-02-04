@@ -324,6 +324,7 @@ export function useTurnosManagement() {
     selectedDate,
     setSelectedDate,
     fetchMascotaDetails,
+    fetchTurnos,
     handleToggleBlockDate,
     handleToggleSingleDate,
     handleToggleDateRange,

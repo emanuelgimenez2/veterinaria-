@@ -18,12 +18,23 @@ import {
   Users,
   Phone,
   MapPin,
-  PawPrint,
   Mail,
   FileText,
   Sparkles,
   Syringe,
+  Dog,
+  Cat,
+  Bird,
+  PawPrint,
 } from "lucide-react";
+
+function getMascotaIcon(tipo: string) {
+  const t = tipo?.toLowerCase() || "";
+  if (t.includes("perro") || t.includes("dog")) return Dog;
+  if (t.includes("gato") || t.includes("cat")) return Cat;
+  if (t.includes("ave") || t.includes("bird") || t.includes("pájaro")) return Bird;
+  return PawPrint;
+}
 
 interface TurnoDetailsModalProps {
   open: boolean;
@@ -35,6 +46,7 @@ interface TurnoDetailsModalProps {
   onCancel: (turnoId: string) => void;
   onEdit: (turno: Turno) => void;
   onDelete: (turnoId: string) => void;
+  onGenerateHistoria?: (turno: Turno) => void;
 }
 
 const getEstadoBadge = (estado: string) => {
@@ -75,6 +87,7 @@ export function TurnoDetailsModal({
   onCancel,
   onEdit,
   onDelete,
+  onGenerateHistoria,
 }: TurnoDetailsModalProps) {
   if (!turno) return null;
 
@@ -148,7 +161,10 @@ export function TurnoDetailsModal({
             {/* Mascota */}
             <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                <PawPrint className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 dark:text-slate-300" />
+                {(() => {
+                  const MascotaIcon = getMascotaIcon(turno.mascota?.tipo ?? "");
+                  return <MascotaIcon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 dark:text-slate-300" />;
+                })()}
                 <h3 className="font-bold text-xs sm:text-sm lg:text-base text-slate-900 dark:text-slate-100">
                   Información de la Mascota
                 </h3>
@@ -299,6 +315,16 @@ export function TurnoDetailsModal({
                   <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Completar
                 </Button>
+                {onGenerateHistoria && (
+                  <Button
+                    onClick={() => onGenerateHistoria(turno)}
+                    variant="outline"
+                    className="flex-1 border-2 border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-950/30 font-semibold h-8 sm:h-9 lg:h-10 text-[10px] sm:text-xs lg:text-sm"
+                  >
+                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    Generar Historia Clínica
+                  </Button>
+                )}
                 <Button
                   onClick={() => turno.id && onCancel(turno.id)}
                   variant="outline"

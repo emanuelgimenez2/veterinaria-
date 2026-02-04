@@ -27,7 +27,13 @@ import {
   RadialBarChart,
   RadialBar,
 } from "recharts";
-import { getTurnos } from "@/lib/firebase/firestore";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { getTurnos, getClientesBasic } from "@/lib/firebase/firestore";
 import type { Turno } from "@/lib/firebase/firestore";
 import {
   Calendar,
@@ -42,25 +48,36 @@ import {
   DollarSign,
   CalendarDays,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
 
-export function DashboardCharts() {
+interface DashboardChartsProps {
+  onNavigateToTurnos?: (turnoId?: string) => void;
+}
+
+export function DashboardCharts({ onNavigateToTurnos }: DashboardChartsProps = {}) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendientesPopoverOpen, setPendientesPopoverOpen] = useState(false);
 
   useEffect(() => {
-    const fetchTurnos = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getTurnos();
-        setTurnos(data);
+        const [turnosData, clientesData] = await Promise.all([
+          getTurnos(),
+          getClientesBasic(),
+        ]);
+        setTurnos(turnosData);
+        setClientes(clientesData);
       } catch (error) {
-        console.error("Error fetching turnos:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTurnos();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -102,12 +119,16 @@ export function DashboardCharts() {
     return acc;
   }, {} as Record<string, number>);
 
-  const mascotasPorTipoData = Object.entries(mascotasPorTipo).map(
-    ([tipo, cantidad]) => ({
-      tipo: tipo.charAt(0).toUpperCase() + tipo.slice(1),
+  const mascotasPorTipoData = Object.entries(mascotasPorTipo)
+    .map(([tipo, cantidad]) => ({
+      tipo: tipo
+        .toLowerCase()
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" "),
       cantidad,
-    })
-  );
+    }))
+    .sort((a, b) => b.cantidad - a.cantidad); // Ordenar por cantidad descendente
 
   const estadosTurnos = {
     pendiente: turnos.filter((t) => t.estado === "pendiente").length,
@@ -119,9 +140,18 @@ export function DashboardCharts() {
   const mascotasUnicas = new Set(
     turnos.filter((t) => t.mascota?.nombre).map((t) => t.mascota.nombre)
   ).size;
-  const dueniosUnicos = new Set(
-    turnos.filter((t) => t.cliente?.nombre).map((t) => t.cliente.nombre)
-  ).size;
+  const totalClientes = clientes?.length || 0; // Total de clientes en Firestore
+
+  // Turnos pendientes para el popover
+  const turnosPendientes = (turnos || [])
+    .filter((t) => t?.estado === "pendiente")
+    .sort((a, b) => {
+      const fechaA = a?.turno?.fecha || "";
+      const fechaB = b?.turno?.fecha || "";
+      if (fechaA !== fechaB) return fechaA.localeCompare(fechaB);
+      return (a?.turno?.hora || "").localeCompare(b?.turno?.hora || "");
+    })
+    .slice(0, 5); // Mostrar solo los primeros 5
 
   // Turnos por mes
   const turnosPorMes = turnos.reduce((acc, turno) => {
@@ -142,7 +172,12 @@ export function DashboardCharts() {
     }))
     .slice(-6);
 
-  // Horarios más populares
+  // Horarios más populares - Generar todas las horas del horario de atención (08:00 a 20:00)
+  const horasDisponibles = Array.from({ length: 13 }, (_, i) => {
+    const hora = 8 + i;
+    return `${hora.toString().padStart(2, "0")}:00`;
+  });
+
   const turnosPorHorario = turnos.reduce((acc, turno) => {
     if (turno.turno?.hora) {
       const hora = turno.turno.hora.split(":")[0] + ":00";
@@ -151,9 +186,11 @@ export function DashboardCharts() {
     return acc;
   }, {} as Record<string, number>);
 
-  const turnosPorHorarioData = Object.entries(turnosPorHorario)
-    .map(([hora, cantidad]) => ({ hora, cantidad }))
-    .sort((a, b) => a.hora.localeCompare(b.hora));
+  // Crear array completo con todas las horas, incluso si no tienen turnos
+  const turnosPorHorarioData = horasDisponibles.map((hora) => ({
+    hora,
+    cantidad: turnosPorHorario[hora] || 0,
+  }));
 
   const estadosTurnosData = [
     {
@@ -181,13 +218,13 @@ export function DashboardCharts() {
   ];
 
   const PIE_COLORS = [
-    "#6366f1",
-    "#8b5cf6",
-    "#ec4899",
-    "#f59e0b",
-    "#10b981",
-    "#06b6d4",
-    "#3b82f6",
+    "#8884d8",
+    "#82ca9d",
+    "#ffc658",
+    "#ff8042",
+    "#8dd1e1",
+    "#d084d0",
+    "#ffb347",
   ];
 
   const totalTurnos = turnos.length;
@@ -222,6 +259,7 @@ export function DashboardCharts() {
     }
     return null;
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-2 sm:p-3 lg:p-6">
@@ -300,6 +338,79 @@ export function DashboardCharts() {
             <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
               Por atender
             </p>
+            {estadosTurnos.pendiente > 0 && turnosPendientes && turnosPendientes.length > 0 && (
+              <Popover open={pendientesPopoverOpen} onOpenChange={setPendientesPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="mt-2 text-[10px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline font-medium"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    Ver detalles
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="end">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                        Turnos Pendientes
+                      </h4>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {turnosPendientes?.length || 0} de {estadosTurnos.pendiente}
+                      </span>
+                    </div>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {!turnosPendientes || turnosPendientes.length === 0 ? (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-4">
+                          No hay turnos pendientes
+                        </p>
+                      ) : (
+                        turnosPendientes.map((turno) => {
+                          const fechaStr = turno.turno?.fecha || "";
+                          const horaStr = turno.turno?.hora || "";
+                          const fecha = fechaStr
+                            ? new Date(fechaStr + "T00:00:00").toLocaleDateString("es-AR", {
+                                day: "numeric",
+                                month: "short",
+                              })
+                            : "—";
+                          return (
+                            <div
+                              key={turno.id}
+                              className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                                  {turno.mascota?.nombre || "Sin nombre"}
+                                </p>
+                                <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                                  {fecha} {horaStr && `· ${horaStr}`}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-[10px] shrink-0"
+                                onClick={() => {
+                                  if (onNavigateToTurnos) {
+                                    onNavigateToTurnos(turno.id);
+                                  }
+                                  setPendientesPopoverOpen(false);
+                                }}
+                              >
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Ir
+                              </Button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </CardContent>
         </Card>
 
@@ -399,7 +510,7 @@ export function DashboardCharts() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
-              {dueniosUnicos}
+              {totalClientes}
             </div>
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
               Clientes
@@ -586,7 +697,7 @@ export function DashboardCharts() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex justify-center">
+          <CardContent className="flex flex-col justify-center">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -595,19 +706,16 @@ export function DashboardCharts() {
                   nameKey="tipo"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius={70}
                   innerRadius={60}
-                  paddingAngle={3}
-                  label={({ tipo, percent }) =>
-                    `${tipo} ${(percent * 100).toFixed(0)}%`
-                  }
-                  labelLine={{ stroke: "#94a3b8", strokeWidth: 2 }}
-                  style={{ fontSize: "12px", fontWeight: 700 }}
+                  paddingAngle={5}
+                  minAngle={15}
                 >
                   {mascotasPorTipoData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      stroke="none"
                       style={{
                         filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))",
                       }}
@@ -615,6 +723,25 @@ export function DashboardCharts() {
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  layout="vertical"
+                  verticalAlign="middle"
+                  align="right"
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: "13px", fontWeight: 600 }}
+                  formatter={(value: string, entry: any) => {
+                    const data = mascotasPorTipoData.find((d) => d.tipo === value);
+                    const total = mascotasPorTipoData.reduce(
+                      (sum, d) => sum + d.cantidad,
+                      0
+                    );
+                    const percent =
+                      data && total > 0
+                        ? ((data.cantidad / total) * 100).toFixed(0)
+                        : "0";
+                    return `${value}: ${percent}%`;
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -700,14 +827,15 @@ export function DashboardCharts() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
-              <LineChart
+              <AreaChart
                 data={turnosPorHorarioData}
                 margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
               >
                 <defs>
-                  <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                  <linearGradient id="horarioGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
+                    <stop offset="50%" stopColor="#38bdf8" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#7dd3fc" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
@@ -727,28 +855,30 @@ export function DashboardCharts() {
                   tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
                   axisLine={{ stroke: "#cbd5e1" }}
                   tickLine={false}
+                  domain={[0, "dataMax + 1"]}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
                   type="monotone"
                   dataKey="cantidad"
-                  stroke="#06b6d4"
+                  stroke="#0ea5e9"
                   strokeWidth={3}
-                  fill="url(#lineGradient)"
+                  fill="url(#horarioGradient)"
                   dot={{
-                    fill: "#06b6d4",
+                    fill: "#0ea5e9",
                     strokeWidth: 2,
                     r: 4,
                     stroke: "#fff",
                   }}
                   activeDot={{
                     r: 6,
-                    fill: "#06b6d4",
+                    fill: "#0ea5e9",
                     stroke: "#fff",
                     strokeWidth: 2,
+                    filter: "drop-shadow(0 2px 4px rgba(14, 165, 233, 0.4))",
                   }}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
