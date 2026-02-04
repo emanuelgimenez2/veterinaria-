@@ -16,7 +16,6 @@ import {
   Bird,
   PawPrint,
   Calendar,
-  LayoutGrid,
 } from "lucide-react";
 import type { Turno } from "@/lib/firebase/firestore";
 
@@ -35,7 +34,6 @@ interface GridViewProps {
   /** Modo de la vista Grid: por fecha seleccionada o historial completo */
   gridMode?: "date" | "full";
   onGridModeChange?: (mode: "date" | "full") => void;
-  onToggleView?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -49,7 +47,6 @@ export function GridView({
   onTurnoClick,
   gridMode = "date",
   onGridModeChange,
-  onToggleView,
 }: GridViewProps) {
   const getEstadoBadge = (estado: string) => {
     switch (estado) {
@@ -127,12 +124,6 @@ export function GridView({
                 </TabsTrigger>
               </TabsList>
             </Tabs>
-            {onToggleView && (
-              <Button variant="outline" size="sm" className="h-9" onClick={onToggleView}>
-                <LayoutGrid className="h-4 w-4 mr-1" />
-                Timeline
-              </Button>
-            )}
           </div>
         )}
         <div className="flex flex-col items-center justify-center py-12 sm:py-16 lg:py-20">
@@ -165,80 +156,95 @@ export function GridView({
     return (
       <div
         key={turno.id}
-        className={`group relative overflow-hidden rounded-lg sm:rounded-xl lg:rounded-2xl border sm:border-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+        className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl ${
           turno.estado === "completado"
-            ? "bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700"
+            ? "bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-800"
             : turno.estado === "cancelado"
-            ? "bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 opacity-60"
+            ? "bg-slate-100/80 dark:bg-slate-900/60 border-slate-300 dark:border-slate-700 opacity-70"
             : isUrgent
-            ? "bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700 shadow-lg shadow-rose-500/20"
+            ? "bg-white dark:bg-slate-900 border-rose-300 dark:border-rose-700 shadow-lg shadow-rose-500/10"
             : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
         }`}
       >
         <div
-          className={`absolute left-0 top-0 right-0 h-1 sm:h-1.5 ${
+          className={`absolute inset-x-0 top-0 h-1.5 ${
             turno.estado === "completado"
-              ? "bg-emerald-500"
+              ? "bg-gradient-to-r from-emerald-400 to-teal-500"
               : turno.estado === "cancelado"
-              ? "bg-slate-400"
+              ? "bg-gradient-to-r from-slate-400 to-slate-500"
               : isUrgent
-              ? "bg-rose-500"
-              : "bg-slate-700 dark:bg-slate-600"
+              ? "bg-gradient-to-r from-rose-500 to-pink-500"
+              : "bg-gradient-to-r from-indigo-500 to-purple-500"
           }`}
         />
-        <div className="p-3 sm:p-4 lg:p-5 pt-4 sm:pt-5 lg:pt-6">
-          <div className="flex items-start justify-between gap-2 mb-3 sm:mb-4">
+        <div className="p-3 sm:p-4 lg:p-5 pt-5">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center shrink-0 shadow-sm">
+              {turno.cliente.nombre
+                ? turno.cliente.nombre
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((p) => p[0])
+                    .join("")
+                    .toUpperCase()
+                : "?"}
+            </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm sm:text-base lg:text-lg font-black text-slate-900 dark:text-white truncate mb-1">
-                {turno.cliente.nombre}
-              </h3>
-              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
-                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span className="font-bold text-slate-900 dark:text-slate-100">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h3 className="text-[13px] sm:text-sm lg:text-base font-black text-slate-900 dark:text-white leading-snug break-words">
+                  {turno.cliente.nombre}
+                </h3>
+                <div className="flex flex-wrap items-center gap-1 shrink-0">
+                  {getEstadoBadge(turno.estado)}
+                  {isUrgent && (
+                    <Badge className="bg-rose-500 text-white border-0 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[9px] font-bold">
+                      <AlertCircle className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5" />
+                      URGENTE
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-slate-100/80 dark:bg-slate-800/80 px-2 py-1 text-[10px] sm:text-xs text-slate-600 dark:text-slate-300">
+                <Clock className="h-3 w-3" />
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {fechaStr ? new Date(fechaStr + "T00:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short" }) : "—"} · {turno.turno?.hora ?? "—"}
                 </span>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-1 sm:gap-2">
-              {getEstadoBadge(turno.estado)}
-              {isUrgent && (
-                <Badge className="bg-rose-500 text-white border-0 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[9px] font-bold">
-                  <AlertCircle className="h-2 w-2 sm:h-2.5 sm:w-2.5 mr-0.5" />
-                  URGENTE
-                </Badge>
-              )}
-            </div>
           </div>
-          <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
-            <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-              <MascotaIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 dark:text-slate-400 flex-shrink-0" />
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-800/30">
+              <MascotaIcon className="h-4 w-4 text-slate-600 dark:text-slate-300 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] sm:text-xs font-semibold text-slate-900 dark:text-white truncate">
+                <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                   {turno.mascota.nombre}
                 </p>
-                <p className="text-[9px] sm:text-[10px] text-slate-600 dark:text-slate-400">
+                <p className="text-[10px] text-slate-600 dark:text-slate-400">
                   {turno.mascota.tipo}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-              <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 dark:text-slate-400 flex-shrink-0" />
-              <p className="text-[10px] sm:text-xs font-semibold text-slate-900 dark:text-white truncate">
-                {turno.cliente.telefono}
-              </p>
-            </div>
-            <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-              <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 dark:text-slate-400 flex-shrink-0 mt-0.5" />
-              <p className="text-[9px] sm:text-[10px] font-medium text-slate-700 dark:text-slate-300 line-clamp-2">
-                {turno.cliente.domicilio || "Dirección no especificada"}
-              </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <Phone className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300 flex-shrink-0" />
+                <p className="text-[10px] sm:text-xs font-semibold text-slate-900 dark:text-white truncate">
+                  {turno.cliente.telefono}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <MapPin className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300 flex-shrink-0" />
+                <p className="text-[10px] sm:text-xs font-semibold text-slate-900 dark:text-white truncate">
+                  {turno.cliente.domicilio || "Sin domicilio"}
+                </p>
+              </div>
             </div>
           </div>
           <Button
             onClick={() => onTurnoClick(turno)}
-            className="w-full bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-700 text-white font-semibold rounded-lg sm:rounded-xl h-7 sm:h-8 lg:h-9 text-[10px] sm:text-xs lg:text-sm shadow-lg"
+            className="w-full bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-900 hover:to-slate-800 dark:from-slate-700 dark:to-slate-600 text-white font-semibold rounded-xl h-8 sm:h-9 text-[10px] sm:text-xs lg:text-sm shadow-xl"
           >
-            Ver Detalles Completos
+            Ver Detalles
           </Button>
         </div>
       </div>
@@ -259,12 +265,6 @@ export function GridView({
               </TabsTrigger>
             </TabsList>
           </Tabs>
-        )}
-        {onToggleView && (
-          <Button variant="outline" size="sm" className="h-9" onClick={onToggleView}>
-            <LayoutGrid className="h-4 w-4 mr-1" />
-            Timeline
-          </Button>
         )}
       </div>
 

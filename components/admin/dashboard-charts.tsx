@@ -28,10 +28,12 @@ import {
   RadialBar,
 } from "recharts";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getTurnos, getClientesBasic } from "@/lib/firebase/firestore";
 import type { Turno } from "@/lib/firebase/firestore";
@@ -52,14 +54,14 @@ import {
 } from "lucide-react";
 
 interface DashboardChartsProps {
-  onNavigateToTurnos?: (turnoId?: string) => void;
+  onNavigateToTurnos?: (fecha?: string) => void;
 }
 
 export function DashboardCharts({ onNavigateToTurnos }: DashboardChartsProps = {}) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pendientesPopoverOpen, setPendientesPopoverOpen] = useState(false);
+  const [pendientesDialogOpen, setPendientesDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -142,7 +144,7 @@ export function DashboardCharts({ onNavigateToTurnos }: DashboardChartsProps = {
   ).size;
   const totalClientes = clientes?.length || 0; // Total de clientes en Firestore
 
-  // Turnos pendientes para el popover
+  // Turnos pendientes para el modal
   const turnosPendientes = (turnos || [])
     .filter((t) => t?.estado === "pendiente")
     .sort((a, b) => {
@@ -150,8 +152,7 @@ export function DashboardCharts({ onNavigateToTurnos }: DashboardChartsProps = {
       const fechaB = b?.turno?.fecha || "";
       if (fechaA !== fechaB) return fechaA.localeCompare(fechaB);
       return (a?.turno?.hora || "").localeCompare(b?.turno?.hora || "");
-    })
-    .slice(0, 5); // Mostrar solo los primeros 5
+    });
 
   // Turnos por mes
   const turnosPorMes = turnos.reduce((acc, turno) => {
@@ -317,7 +318,7 @@ export function DashboardCharts({ onNavigateToTurnos }: DashboardChartsProps = {
 
         {/* Pendientes */}
         <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-white/90 to-white/70 dark:from-slate-900/90 dark:to-slate-900/70 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
@@ -339,30 +340,29 @@ export function DashboardCharts({ onNavigateToTurnos }: DashboardChartsProps = {
               Por atender
             </p>
             {estadosTurnos.pendiente > 0 && turnosPendientes && turnosPendientes.length > 0 && (
-              <Popover open={pendientesPopoverOpen} onOpenChange={setPendientesPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    className="mt-2 text-[10px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline font-medium"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    Ver detalles
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4" align="end">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                        Turnos Pendientes
-                      </h4>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {turnosPendientes?.length || 0} de {estadosTurnos.pendiente}
-                      </span>
-                    </div>
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              <>
+                <button
+                  className="mt-2 text-[10px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline font-medium"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendientesDialogOpen(true);
+                  }}
+                >
+                  Ver detalles
+                </button>
+                <Dialog open={pendientesDialogOpen} onOpenChange={setPendientesDialogOpen}>
+                  <DialogContent className="sm:max-w-2xl border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                        Turnos pendientes
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-slate-600 dark:text-slate-400">
+                        {turnosPendientes?.length || 0} pendientes ordenados por fecha
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
                       {!turnosPendientes || turnosPendientes.length === 0 ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-4">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">
                           No hay turnos pendientes
                         </p>
                       ) : (
@@ -373,43 +373,44 @@ export function DashboardCharts({ onNavigateToTurnos }: DashboardChartsProps = {
                             ? new Date(fechaStr + "T00:00:00").toLocaleDateString("es-AR", {
                                 day: "numeric",
                                 month: "short",
+                                year: "numeric",
                               })
                             : "—";
                           return (
                             <div
                               key={turno.id}
-                              className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                              className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                             >
-                              <div className="flex-1 min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                                  {turno.mascota?.nombre || "Sin nombre"}
+                                  {turno.mascota?.nombre || "Sin nombre"} · {turno.cliente?.nombre || "Cliente"}
                                 </p>
-                                <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                                <p className="text-[11px] text-slate-600 dark:text-slate-400">
                                   {fecha} {horaStr && `· ${horaStr}`}
                                 </p>
                               </div>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 px-2 text-[10px] shrink-0"
+                                className="h-8 px-2 text-xs shrink-0"
                                 onClick={() => {
                                   if (onNavigateToTurnos) {
-                                    onNavigateToTurnos(turno.id);
+                                    onNavigateToTurnos(turno.turno?.fecha);
                                   }
-                                  setPendientesPopoverOpen(false);
+                                  setPendientesDialogOpen(false);
                                 }}
                               >
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Ir
+                                <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                                Ver detalles
                               </Button>
                             </div>
                           );
                         })
                       )}
                     </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           </CardContent>
         </Card>

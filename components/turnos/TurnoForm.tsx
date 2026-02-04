@@ -14,7 +14,19 @@ import { ModalConfirmacion } from "./ModalConfirmacion";
 import { useTurnoForm } from "@/hooks/turnos/useTurnoForm";
 import { Heart, Clock } from "lucide-react";
 
-export function TurnoForm() {
+interface TurnoFormProps {
+  defaultDni?: string;
+  lockDni?: boolean;
+  redirectOnSuccess?: boolean;
+  onSuccess?: () => void;
+}
+
+export function TurnoForm({
+  defaultDni,
+  lockDni,
+  redirectOnSuccess = true,
+  onSuccess,
+}: TurnoFormProps) {
   const {
     formData,
     handleChange,
@@ -33,7 +45,7 @@ export function TurnoForm() {
     loadingCliente,
     showConfirmModal,
     setShowConfirmModal,
-  } = useTurnoForm();
+  } = useTurnoForm({ defaultDni, lockDni, redirectOnSuccess, onSuccess });
 
   // NUEVO: Determinar si mostrar sección de vacunas
   const mostrarVacunas = formData.servicio === "vacunacion" && formData.tipoMascota;
@@ -51,6 +63,7 @@ export function TurnoForm() {
               handleChange={handleChange}
               clienteExistente={clienteExistente}
               loadingCliente={loadingCliente}
+              lockDni={lockDni}
             />
 
             {/* Divider */}

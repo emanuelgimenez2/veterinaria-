@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -37,8 +37,13 @@ import { EditTurnoModal } from "./EditTurnoModal";
 import { BlockDateModal } from "./BlockDateModal";
 import { StatsCard } from "./StatsCard";
 import { NextAppointmentCard } from "./NextAppointmentCard";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function TurnosManagement() {
+interface TurnosManagementProps {
+  targetDate?: string;
+}
+
+export default function TurnosManagement({ targetDate }: TurnosManagementProps) {
   const {
     turnos,
     loading,
@@ -71,7 +76,9 @@ export default function TurnosManagement() {
   const [dateRangeStart, setDateRangeStart] = useState<string>("");
   const [dateRangeEnd, setDateRangeEnd] = useState<string>("");
   const [viewMode, setViewMode] = useState<"timeline" | "grid">("timeline");
+  const [timelineMode, setTimelineMode] = useState<"date" | "full">("date");
   const [gridMode, setGridMode] = useState<"date" | "full">("date");
+  const [pendientesDialogOpen, setPendientesDialogOpen] = useState(false);
 
   const [generateHistoriaTurno, setGenerateHistoriaTurno] = useState<Turno | null>(null);
   const [formNotaRapida, setFormNotaRapida] = useState({
@@ -82,6 +89,21 @@ export default function TurnosManagement() {
     observaciones: "",
   });
   const [savingNota, setSavingNota] = useState(false);
+
+  useEffect(() => {
+    if (!targetDate) return;
+    setSelectedDate(targetDate);
+    setCurrentMonth(new Date(targetDate + "T00:00:00"));
+  }, [targetDate, setSelectedDate]);
+
+  const turnosPendientes = (turnos || [])
+    .filter((t) => t?.estado === "pendiente")
+    .sort((a, b) => {
+      const fechaA = a?.turno?.fecha || "";
+      const fechaB = b?.turno?.fecha || "";
+      if (fechaA !== fechaB) return fechaA.localeCompare(fechaB);
+      return (a?.turno?.hora || "").localeCompare(b?.turno?.hora || "");
+    });
 
   useEffect(() => {
     if (generateHistoriaTurno) {
@@ -199,21 +221,33 @@ export default function TurnosManagement() {
         <div className="lg:col-span-4 space-y-2 sm:space-y-3 lg:space-y-4">
           <Card className="border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl">
             <CardHeader className="pb-1.5 sm:pb-2 lg:pb-3">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-slate-700 dark:bg-slate-600 shadow-lg">
-                  <CalendarIcon
-                    className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
-                    strokeWidth={2.5}
-                  />
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="p-1 sm:p-1.5 lg:p-2 rounded-md sm:rounded-lg bg-slate-700 dark:bg-slate-600 shadow-lg">
+                    <CalendarIcon
+                      className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white"
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xs sm:text-sm lg:text-base font-bold text-slate-900 dark:text-white">
+                      Calendario
+                    </CardTitle>
+                    <CardDescription className="text-[8px] sm:text-[9px] lg:text-[10px] text-slate-600 dark:text-slate-400">
+                      Selecciona una fecha
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-xs sm:text-sm lg:text-base font-bold text-slate-900 dark:text-white">
-                    Calendario
-                  </CardTitle>
-                  <CardDescription className="text-[8px] sm:text-[9px] lg:text-[10px] text-slate-600 dark:text-slate-400">
-                    Selecciona una fecha
-                  </CardDescription>
-                </div>
+                {turnosPendientes.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-[10px]"
+                    onClick={() => setPendientesDialogOpen(true)}
+                  >
+                    Ver pendientes
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-2 sm:p-3 lg:p-4">
@@ -240,12 +274,43 @@ export default function TurnosManagement() {
         </div>
 
         <div className="lg:col-span-8">
+          <div className="mb-2 sm:mb-3 pb-2 border-b border-slate-200 dark:border-slate-800">
+            <p className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 dark:text-white mb-2">
+              Vista
+            </p>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "timeline" | "grid")}>
+              <TabsList className="h-9 bg-slate-200/80 dark:bg-slate-800/80">
+                <TabsTrigger value="timeline" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                  Vista Timeline
+                </TabsTrigger>
+                <TabsTrigger value="grid" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                  Vista Grid
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {viewMode === "timeline" && (
+              <Tabs
+                value={timelineMode}
+                onValueChange={(v) => setTimelineMode(v as "date" | "full")}
+                className="mt-2"
+              >
+                <TabsList className="h-9 bg-slate-200/80 dark:bg-slate-800/80">
+                  <TabsTrigger value="date" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                    Vista por Fecha
+                  </TabsTrigger>
+                  <TabsTrigger value="full" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
+                    Historial Completo
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
+          </div>
           {viewMode === "timeline" ? (
             <TimelineView
               selectedDate={selectedDate}
               turnos={turnos}
               onViewDetails={handleViewDetails}
-              onToggleView={() => setViewMode("grid")}
+              mode={timelineMode}
             />
           ) : (
             <GridView
@@ -254,7 +319,6 @@ export default function TurnosManagement() {
               onTurnoClick={handleViewDetails}
               gridMode={gridMode}
               onGridModeChange={setGridMode}
-              onToggleView={() => setViewMode("timeline")}
             />
           )}
         </div>
@@ -274,6 +338,67 @@ export default function TurnosManagement() {
         onDelete={(id) => handleDelete(id, closeDetailsModal)}
         onGenerateHistoria={handleGenerateHistoria}
       />
+
+      <Dialog open={pendientesDialogOpen} onOpenChange={setPendientesDialogOpen}>
+        <DialogContent className="sm:max-w-2xl border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Turnos pendientes
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600 dark:text-slate-400">
+              {turnosPendientes.length} pendientes ordenados por fecha
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+            {turnosPendientes.length === 0 ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-6">
+                No hay turnos pendientes
+              </p>
+            ) : (
+              turnosPendientes.map((turno) => {
+                const fechaStr = turno.turno?.fecha || "";
+                const horaStr = turno.turno?.hora || "";
+                const fecha = fechaStr
+                  ? new Date(fechaStr + "T00:00:00").toLocaleDateString("es-AR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "—";
+                return (
+                  <div
+                    key={turno.id}
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                        {turno.mascota?.nombre || "Sin nombre"} · {turno.cliente?.nombre || "Cliente"}
+                      </p>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                        {fecha} {horaStr && `· ${horaStr}`}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 text-xs shrink-0"
+                      onClick={() => {
+                        if (turno.turno?.fecha) {
+                          setSelectedDate(turno.turno.fecha);
+                          setCurrentMonth(new Date(turno.turno.fecha + "T00:00:00"));
+                        }
+                        setPendientesDialogOpen(false);
+                      }}
+                    >
+                      Ver detalles
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!generateHistoriaTurno} onOpenChange={(open) => !open && setGenerateHistoriaTurno(null)}>
         <DialogContent className="sm:max-w-lg border-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl">

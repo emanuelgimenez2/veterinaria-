@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [turnosTargetDate, setTurnosTargetDate] = useState<string | null>(null)
   const router = useRouter()
 
   return (
@@ -66,10 +67,17 @@ export default function AdminPage() {
 
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex-1">
           <TabsContent value="dashboard" className="mt-0 space-y-6 data-[state=inactive]:hidden">
-            <DashboardCharts onNavigateToTurnos={(turnoId) => setActiveTab("turnos")} />
+            <DashboardCharts
+              onNavigateToTurnos={(fecha) => {
+                setActiveTab("turnos")
+                if (fecha) {
+                  setTurnosTargetDate(fecha)
+                }
+              }}
+            />
           </TabsContent>
           <TabsContent value="turnos" className="mt-0 space-y-6 data-[state=inactive]:hidden">
-            <TurnosManagement />
+            <TurnosManagement targetDate={turnosTargetDate ?? undefined} />
           </TabsContent>
           <TabsContent value="libreta" className="mt-0 data-[state=inactive]:hidden">
             <LibretaSanitariaManagement />

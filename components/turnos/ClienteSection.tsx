@@ -13,6 +13,7 @@ interface ClienteSectionProps {
   handleChange: (field: string, value: string) => void;
   clienteExistente: any;
   loadingCliente: boolean;
+  lockDni?: boolean;
 }
 
 export function ClienteSection({
@@ -20,6 +21,7 @@ export function ClienteSection({
   handleChange,
   clienteExistente,
   loadingCliente,
+  lockDni,
 }: ClienteSectionProps) {
   return (
     <div
@@ -59,6 +61,7 @@ export function ClienteSection({
             value={formData.dni}
             onChange={(e) => handleChange("dni", e.target.value)}
             required
+            disabled={!!lockDni}
             className="h-11 border-2 focus-visible:ring-primary/50"
           />
           {loadingCliente && (

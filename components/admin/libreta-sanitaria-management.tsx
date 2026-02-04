@@ -193,6 +193,7 @@ export function LibretaSanitariaManagement() {
   const [expandedClienteId, setExpandedClienteId] = useState<string | null>(null);
   const [clienteExpandido, setClienteExpandido] = useState<ClienteExpandido | null>(null);
   const [loadingCliente, setLoadingCliente] = useState(false);
+  const [mascotasResumen, setMascotasResumen] = useState<Record<string, { count: number; names: string[] }>>({});
   const [selectedMascotaId, setSelectedMascotaId] = useState<string | null>(null);
   const [timelineData, setTimelineData] = useState<{
     historias: Historia[];
@@ -266,6 +267,39 @@ export function LibretaSanitariaManagement() {
     const start = page * ITEMS_PER_PAGE;
     return filtered.slice(0, start + ITEMS_PER_PAGE);
   }, [filtered, page]);
+
+  useEffect(() => {
+    const missingIds = paginated
+      .map((c) => c.id)
+      .filter((id): id is string => !!id && !mascotasResumen[id]);
+    if (missingIds.length === 0) return;
+    let alive = true;
+    const load = async () => {
+      try {
+        const results = await Promise.all(
+          missingIds.map(async (id) => {
+            const mascotas = await getMascotas(id);
+            const names = mascotas.map((m) => m.nombre).filter(Boolean);
+            return { id, count: mascotas.length, names };
+          })
+        );
+        if (!alive) return;
+        setMascotasResumen((prev) => {
+          const next = { ...prev };
+          results.forEach((r) => {
+            next[r.id] = { count: r.count, names: r.names };
+          });
+          return next;
+        });
+      } catch (e) {
+        console.error("Error cargando mascotas del listado:", e);
+      }
+    };
+    load();
+    return () => {
+      alive = false;
+    };
+  }, [paginated, mascotasResumen]);
 
   const loadClientes = useCallback(async () => {
     setLoading(true);
@@ -1092,12 +1126,17 @@ export function LibretaSanitariaManagement() {
               ) : (
                 paginated.map((c) => {
                   const isActive = expandedClienteId === c.id;
-                  const mascotasDelCliente = isActive && clienteExpandido?.cliente.id === c.id ? clienteExpandido.mascotas : [];
-                  const textoMascotas = mascotasDelCliente.length === 0
-                    ? null
-                    : mascotasDelCliente.length <= 2
-                      ? mascotasDelCliente.map((m) => m.nombre).join(", ")
-                      : `${mascotasDelCliente.slice(0, 2).map((m) => m.nombre).join(", ")} y +${mascotasDelCliente.length - 2} más`;
+                  const resumenMascotas = c.id ? mascotasResumen[c.id] : undefined;
+                  const totalMascotas = resumenMascotas?.count;
+                  const nombresMascotas = (resumenMascotas?.names ?? []).slice(0, 3);
+                  const textoMascotas =
+                    totalMascotas === undefined
+                      ? "Mascotas: ..."
+                      : `Mascotas: ${totalMascotas}${
+                          nombresMascotas.length
+                            ? ` · ${nombresMascotas.join(", ")}${totalMascotas > 3 ? " ..." : ""}`
+                            : ""
+                        }`;
                   return (
                     <div
                       key={c.id}
@@ -1113,11 +1152,12 @@ export function LibretaSanitariaManagement() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900 dark:text-slate-100 truncate text-sm">{c.nombre}</p>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">DNI {c.dni}</p>
-                        {textoMascotas && (
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5" title={mascotasDelCliente.map((m) => m.nombre).join(", ")}>
-                            {textoMascotas}
-                          </p>
-                        )}
+                        <p
+                          className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5"
+                          title={(resumenMascotas?.names ?? []).join(", ")}
+                        >
+                          {textoMascotas}
+                        </p>
                       </div>
                       <ChevronRight className={`h-4 w-4 shrink-0 ${isActive ? "text-emerald-600" : "text-slate-400"}`} />
                     </div>

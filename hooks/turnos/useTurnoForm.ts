@@ -15,7 +15,20 @@ import { enviarEmailConfirmacion } from "@/app/turno/confirmaciondeturno";
 import { useClienteByDNI } from "./useClienteByDNI";
 import { useDisponibilidadTurnos } from "./useDisponibilidadTurnos";
 
-export function useTurnoForm() {
+interface UseTurnoFormOptions {
+  defaultDni?: string;
+  lockDni?: boolean;
+  redirectOnSuccess?: boolean;
+  onSuccess?: () => void;
+}
+
+export function useTurnoForm(options: UseTurnoFormOptions = {}) {
+  const {
+    defaultDni,
+    lockDni = false,
+    redirectOnSuccess = true,
+    onSuccess,
+  } = options;
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -58,6 +71,13 @@ export function useTurnoForm() {
 
   // Autocompletar datos del cliente cuando se encuentra
   useEffect(() => {
+    if (defaultDni && defaultDni !== formData.dni) {
+      setFormData((prev) => ({ ...prev, dni: defaultDni }));
+      setDatosEditados(false);
+    }
+  }, [defaultDni, formData.dni]);
+
+  useEffect(() => {
     if (clienteExistente && !datosEditados) {
       setFormData((prev) => ({
         ...prev,
@@ -96,6 +116,9 @@ export function useTurnoForm() {
   }, [selectedDate, turnosExistentes]);
 
   const handleChange = (field: string, value: string) => {
+    if (lockDni && field === "dni") {
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Detectar si el usuario editó datos del cliente
@@ -273,10 +296,12 @@ export function useTurnoForm() {
         title: "✅ Turno agendado exitosamente",
         description: "Te enviamos un email de confirmación. Nos pondremos en contacto contigo pronto.",
       });
-
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
+      onSuccess?.();
+      if (redirectOnSuccess) {
+        setTimeout(() => {
+          router.push("/");
+        }, 2000);
+      }
     } catch (error) {
       console.error("Error creating turno:", error);
       toast({
