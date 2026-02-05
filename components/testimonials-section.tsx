@@ -9,9 +9,9 @@ const testimonials = [
   {
     name: "María González",
     image: "/smiling-woman-portrait.png",
-    text: "Excelente atención y profesionalismo. Mi perro Max se siente como en casa cada vez que vamos.",
+    text: "Muy buena atención a domicilio. Rocky se pone nervioso en las veterinarias, pero en casa estuvo tranquilo durante toda la revisión.",
     rating: 5,
-    pet: "Max - Golden Retriever",
+    pet: "Peter Pan - Schnauzer",
     color: "from-pink-500/10 to-rose-500/10",
     accentColor: "text-pink-600",
     borderColor: "group-hover:border-pink-500/50"
@@ -19,9 +19,9 @@ const testimonials = [
   {
     name: "Carlos Rodríguez",
     image: "/smiling-man-portrait.png",
-    text: "La Dra. Laura salvó a mi gato cuando estaba muy enfermo. Siempre estaré agradecido.",
+    text: "Me atendió super rápido cuando Toby tenía problemas en la patita. Además me vendió un collar antipulgas que le viene bárbaro.",
     rating: 5,
-    pet: "Michi - Gato Persa",
+    pet: "Toby - Salchicha",
     color: "from-blue-500/10 to-cyan-500/10",
     accentColor: "text-blue-600",
     borderColor: "group-hover:border-blue-500/50"
@@ -29,9 +29,9 @@ const testimonials = [
   {
     name: "Ana Martínez",
     image: "/woman-glasses-portrait.png",
-    text: "Instalaciones modernas y limpias. El personal es muy amable y paciente con los animales.",
+    text: "Me encanta que venga a casa porque con el gatito es un tema llevarlo al veterinario. Siempre responde mis dudas con paciencia.",
     rating: 5,
-    pet: "Luna - Husky Siberiano",
+    pet: "Milo - Gatito",
     color: "from-purple-500/10 to-indigo-500/10",
     accentColor: "text-purple-600",
     borderColor: "group-hover:border-purple-500/50"
